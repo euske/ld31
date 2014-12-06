@@ -91,7 +91,8 @@ Player.prototype.idle = function ()
   this.rect.y += d.y;
   this.scene.setCenter(this.rect.inset(100, 100));
   if (this.scene.pick(this.rect)) {
-    this.game.addscore(+1);
+    this.game.audios.pick.play();
+    this.game.update_score(+1);
   }
 }
 Player.prototype.repaint = function (ctx)
@@ -103,12 +104,12 @@ Player.prototype.repaint = function (ctx)
 		x, y, this.rect.width, this.rect.height);
 }
 
-function Game(canvas, images, audios, label)
+function Game(canvas, images, audios, labels)
 {
   this.canvas = canvas;
   this.images = images;
   this.audios = audios;
-  this.label = label;
+  this.labels = labels;
   this.active = false;
   this.key_left = false;
   this.key_right = false;
@@ -201,8 +202,11 @@ Game.prototype.init = function ()
   this.scene = new Scene(tilemap, width, height);
   this.player = new Player(this, this.scene, tilesize, tilesize);
   this.scene.setCenter(this.player.rect);
-  this.score = 0;
   this.t = 0;
+  this.score = 0;
+  this.health = 10;
+  this.update_score(0);
+  this.update_health(0);
   this.focus();
 }
 
@@ -252,9 +256,14 @@ Game.prototype.action = function ()
   this.player.jump();
 }
 
-Game.prototype.addscore = function (d)
+Game.prototype.update_score = function (d)
 {
   this.score += d;
-  this.audios.pick.play();
-  this.label.innerHTML = ("Score: "+this.score);
+  this.labels.score.innerHTML = ("Score: "+this.score);
+}
+
+Game.prototype.update_health = function (d)
+{
+  this.health += d;
+  this.labels.health.innerHTML = ("Health: "+this.health);
 }

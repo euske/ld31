@@ -17,10 +17,10 @@ function run()
   }
   var images = getprops(document.getElementsByTagName('img'));
   var audios = getprops(document.getElementsByTagName('audio'));
+  var labels = getprops(document.getElementsByClassName('label'));
   var canvas = document.getElementById('canvas');
-  var label = document.getElementById('label');
   var ctx = canvas.getContext('2d');
-  var game = new Game(canvas, images, audios, label);
+  var game = new Game(canvas, images, audios, labels);
   var dt = 1000/30;
   function idle() {
     if (game.active) {
@@ -41,11 +41,12 @@ function run()
 <div align=center>
   <canvas id="canvas" style="position:absolute; top:0; left:0; background:#61E8A4;"
 	  width="640" height="640"></canvas>
-  <div id="label" style="position:absolute; top:0; left:0; color:white;">Score: 0</div>
+  <div class="label" id="score" style="position:absolute; top:0; left:100px; color:white;"></div>
+  <div class="label" id="health" style="position:absolute; top:0; left:200px; color:white;"></div>
   <img id="tiles" src="assets/tiles.png" style="display:none;">
   <img id="sprites" src="assets/sprites.png" style="display:none;">
   <audio id="jump" type="audio/mpeg" src="assets/sounds/jump.mp3" preload="auto"></audio>
   <audio id="pick" type="audio/mpeg" src="assets/sounds/pick.mp3" preload="auto"></audio>
-  <audio id="music" type="audio/mpeg" src="assets/sounds/music.mp3" loop="true" preload="auto"></audio>
+  <audio id="music" type="audio/mpeg" src="assets/musics/intro_jingle_2.mp3" loop="true" preload="auto"></audio>
 </div>
 </body>
