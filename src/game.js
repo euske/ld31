@@ -3,25 +3,40 @@
 function Player(game, scene, width, height)
 {
   this.speed = 8;
+  this.creep = 0.2;
   this.maxjump = 20;
   this.game = game;
   this.scene = scene;
   this.rect = new Rectangle(0, 0, width, height);
   this.jumping = -1;
   this.vx = this.vy = 0;
-  this.jvx = this.jvy = 0;
 }
 
 Player.prototype.idle = function ()
 {
   var vx = this.vx;
   var vy = this.vy;
+
+  if (this.jumping < 0) {
+    var r = this.rect.inset(this.rect.width/2, this.rect.height/2);
+    if (this.scene.checkAny(r.move(-r.width, 0), Tile.Empty)) {
+      vx -= this.creep;
+    } else if (this.scene.checkAny(r.move(+r.width, 0), Tile.Empty)) {
+      vx += this.creep;
+    }
+    if (this.scene.checkAny(r.move(0, -r.height), Tile.Empty)) {
+      vy -= this.creep;
+    } else if (this.scene.checkAny(r.move(0, +r.height), Tile.Empty)) {
+      vy += this.creep;
+    }
+  }
+  
   var d = this.scene.collide(this.rect, this.speed*vx, this.speed*vy);
   d.x = this.scene.collide(this.rect, this.speed*vx, d.y).x;
   d.y = this.scene.collide(this.rect, d.x, this.speed*vy).y;
   this.rect.x += d.x;
   this.rect.y += d.y;
-  this.scene.setCenter(this.rect.inset(100, 100));
+  this.scene.setCenter(this.rect.inset(-600, -600));
   if (0 <= this.jumping) {
     this.jumping++;
     if (this.maxjump <= this.jumping) {
@@ -43,19 +58,26 @@ Player.prototype.repaint = function (ctx)
 		x, y, this.rect.width, this.rect.height);
   if (0 <= this.jumping) {
     var t = (this.jumping/this.maxjump)-0.5;
-    y -= (0.25-t*t)*this.maxjump * this.rect.height;
+    y -= (0.25-t*t)*6 * this.rect.height;
   }
   ctx.drawImage(this.game.images.sprites,
 		0, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
 }
 
+Player.prototype.isDead = function ()
+{
+  if (0 <= this.jumping) {
+    return false;
+  }
+  var r = this.rect.inset(this.rect.width/2, this.rect.height/2);
+  return this.scene.checkAll(r, Tile.Empty);
+}
+
 Player.prototype.jump = function ()
 {
   if (this.jumping < 0) {
     this.game.audios.jump.play();
-    this.jvx = this.vx;
-    this.jvy = this.vy;
     this.jumping = 0;
   }
 }
@@ -174,6 +196,9 @@ Game.prototype.idle = function ()
 {
   this.scene.generate();
   this.player.idle();
+  if (this.player.isDead()) {
+    this.init();
+  }
   this.t++;
 }
 

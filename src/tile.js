@@ -95,6 +95,10 @@ Tile.getSide = function (ul,uu,ur, ll, rr, dl,dd,dr)
     return 43;
   } else if (ul && !uu && ur && !ll && !rr && dd) {
     return 44;
+  } else if (!ul && !uu && ur && !ll && !rr && !dl && !dd && dr) {
+    return 45;
+  } else if (ul && !uu && !ur && !ll && !rr && dl && !dd && !dr) {
+    return 46;
   } else {
     return 0;
   }

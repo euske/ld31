@@ -94,6 +94,22 @@ Scene.prototype.collide = function (rect, vx, vy)
   return this.tilemap.collide(rect, new Point(vx, vy), f);
 }
 
+Scene.prototype.checkAny = function (rect, c)
+{
+  var tilemap = this.tilemap;
+  var r = tilemap.coord2map(rect);
+  var f = function (x,y) { return (tilemap.get(x,y) == c); };
+  return tilemap.apply(r, f);
+}
+
+Scene.prototype.checkAll = function (rect, c)
+{
+  var tilemap = this.tilemap;
+  var r = tilemap.coord2map(rect);
+  var f = function (x,y) { return (tilemap.get(x,y) != c); };
+  return !tilemap.apply(r, f);
+}
+
 Scene.prototype.pick = function (rect)
 {
   var tilemap = this.tilemap;

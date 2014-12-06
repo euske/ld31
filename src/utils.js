@@ -109,8 +109,8 @@ Rectangle.prototype.inset = function (dw, dh)
 {
   var cx = this.x+this.width/2;
   var cy = this.y+this.height/2;
-  var w = this.width + dw;
-  var h = this.height + dh;
+  var w = this.width - dw;
+  var h = this.height - dh;
   return new Rectangle(cx-w/2, cy-h/2, w, h);
 }
 Rectangle.prototype.clamp = function (rect)
