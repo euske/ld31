@@ -12,7 +12,7 @@ function Player(game, scene, width, height)
   this.vx = this.vy = 0;
 }
 
-Player.prototype.idle = function ()
+Player.prototype.idle = function (t)
 {
   var vx = this.vx;
   var vy = this.vy;
@@ -197,7 +197,7 @@ Game.prototype.init = function ()
 Game.prototype.idle = function ()
 {
   this.scene.generate();
-  this.player.idle();
+  this.player.idle(this.t);
   while (this.player.isDead()) {
     for (var i = 0; i < rnd(10,100); i++) {
       this.scene.rewind();

@@ -7,7 +7,7 @@ Tile = {
   Cake: 101,
 };
 
-Tile.getSide = function (ul,uu,ur, ll, rr, dl,dd,dr)
+Tile.getSideFloor = function (ul,uu,ur, ll, rr, dl,dd,dr)
 {
   if (!ul && !uu && ur && !ll && !rr && !dl && !dd && !dr) {
     return 2;
@@ -108,35 +108,46 @@ Tile.getSide = function (ul,uu,ur, ll, rr, dl,dd,dr)
 // Wall Tiles are 2.5x + 3px tall and overlap eachother
 // 	Walls at top of screen are rendered below walls closer to bottom
 //	Player at y=0 collides with tiles at y=0 and y=1 (2 tile collision)
-Tile.getSideWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
+Tile.getWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
 {
+//	0 is blank
+//	1 to 8 have collisions
+//	9 to 14 are edges
 //		!ul && !uu && !ur && !ll && !rr && !dl && !dd && !dr
-  if (!ul && !uu && !ur && ll && rr) {
-    return 2;
-  } else if (uu && ll && rr) {
+  if (ul && uu && ur && ll && rr && !dl && !dr) {
+	return 1;
+  } else if (ul && uu && ur && ll && rr && dl && !dr) {
+	return 2;
+  } else if (ul && uu && ur && ll && rr && !dl && dr) {
     return 3;
-  } else if (ul && !uu && !ur && ll && !rr) {
+  } else if (ul && uu && ur && ll && rr && dl && dr) {
     return 4;
-  } else if (uu && ll && rr) {
+  } else if (!ul && !uu && !ur && ll && rr && !dl && !dr) {
     return 5;
-  } else if (uu && ll && rr) {
+  } else if (ul && !uu && !ur && ll && rr && !dl && !dr) {
     return 6;
-  } else if (uu && ll && rr) {
+  } else if (!ul && !uu && ur && ll && rr && !dl && !dr) {
     return 7;
-  } else if (!ul && !uu && !ur && !ll && rr) {
+  } else if (ul && !uu && ur && ll && rr && !dl && !dr) {
     return 8;
-  } else if (!uu && ll && rr) {
+  } else if (!ul && !uu && ur && !ll && rr) {
     return 9;
-  } else if (!ul && !uu && !ur && ll && !rr) {
+  } else if (ul && !uu && !ur && ll && !rr) {
     return 10;
-  } else if (!ul && !uu && ur && !ll && rr) {
+  } else if (ul && !uu && ur && ll && rr) {
     return 11;
-  } else if (!ul && !uu && ur && !ll && rr) {
+  } else if (!ul && !uu && !ur && !ll && rr && !dl && !dd && !dr) {
     return 12;
-  } else if (!ul && !uu && ur && !ll && rr) {
+  } else if (!ul && !uu && !ur && !ll && !rr && !dl && !dd && !dr) {
     return 13;
-  } else if (!uu && ll && rr) {
+  } else if (!ul && !uu && !ur && !ll && !rr && !dl && !dd && !dr) {
     return 14;
+  } else if (!ul && !uu && !ur && !ll && rr && !dl && !dd && !dr) {
+    return 15;
+  } else if (!ul && !uu && !ur && !ll && !rr && !dl && !dd && !dr) {
+    return 16;
+  } else if (!ul && !uu && !ur && !ll && !rr && !dl && !dd && !dr) {
+    return 17;
   } else {
     return 0;
   }

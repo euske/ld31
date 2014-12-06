@@ -38,7 +38,7 @@ TileMap.prototype.render = function (ctx, x, y, w, h)
       var c = this.get(x+dx, y+dy);
       if (0 <= c) {
 	if (c == Tile.Empty) {
-	  c = Tile.getSide(
+	  c = Tile.getSideFloor(
 	    (this.get(x+dx-1,y+dy-1) != Tile.Empty),
 	    (this.get(x+dx+0,y+dy-1) != Tile.Empty),
 	    (this.get(x+dx+1,y+dy-1) != Tile.Empty),
