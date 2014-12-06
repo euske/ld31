@@ -69,8 +69,7 @@ Point.prototype.toString = function ()
 }
 Point.prototype.move = function (dx, dy)
 {
-  this.x += dx;
-  this.y += dy;
+  return new Point(this.x+dx, this.y+dy);
 }
 
 // Rectangle
@@ -85,14 +84,34 @@ Rectangle.prototype.toString = function ()
 {
   return '('+this.x+', '+this.y+', '+this.width+', '+this.height+')';
 }
+Rectangle.prototype.equals = function (rect)
+{
+  return (this.x == rect.x && this.y == rect.y &&
+	  this.width == rect.width && this.height == rect.height);
+}
 Rectangle.prototype.copy = function ()
 {
   return new Rectangle(this.x, this.y, this.width, this.height);
 }
 Rectangle.prototype.move = function (dx, dy)
 {
-  this.x += dx;
-  this.y += dy;
+  return new Rectangle(this.x+dx, this.y+dy, this.width, this.height);  
+}
+Rectangle.prototype.inset = function (dw, dh)
+{
+  var cx = this.x+this.width/2;
+  var cy = this.y+this.height/2;
+  var w = this.width + dw;
+  var h = this.height + dh;
+  return new Rectangle(cx-w/2, cy-h/2, w, h);
+}
+Rectangle.prototype.clamp = function (rect)
+{
+  var x0 = Math.max(this.x, rect.x);
+  var y0 = Math.max(this.y, rect.y);
+  var x1 = Math.min(this.x+this.width, rect.x+rect.width);
+  var y1 = Math.min(this.y+this.height, rect.y+rect.height);
+  return new Rectangle(x0, y0, x1-x0, y1-y0);
 }
 Rectangle.prototype.union = function (rect)
 {

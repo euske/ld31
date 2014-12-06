@@ -38,16 +38,20 @@ TileMap.prototype.render = function (ctx, x, y, w, h)
     }
   }
 }
-TileMap.prototype.apply = function (rect, f)
+TileMap.prototype.coord2map = function (rect)
 {
   var ts = this.tilesize;
   var x0 = Math.floor(rect.x/ts);
   var y0 = Math.floor(rect.y/ts);
   var x1 = Math.ceil((rect.x+rect.width)/ts);
   var y1 = Math.ceil((rect.y+rect.height)/ts);
-  for (var y = y0; y < y1; y++) {
-    for (var x = x0; x < x1; x++) {
-      if (f(x, y)) {
+  return new Rectangle(x0, y0, x1-x0, y1-y0);
+}
+TileMap.prototype.apply = function (rect, f)
+{
+  for (var dy = 0; dy < rect.height; dy++) {
+    for (var dx = 0; dx < rect.width; dx++) {
+      if (f(rect.x+dx, rect.y+dy)) {
 	return true;
       }
     }
@@ -57,9 +61,7 @@ TileMap.prototype.apply = function (rect, f)
 TileMap.prototype.collide = function (rect, v, f)
 {
   var ts = this.tilesize;
-  var r = rect.copy();
-  r.move(v.x, v.y);
-  r = r.union(rect);
+  var r = rect.move(v.x, v.y).union(rect);
   var x0 = Math.floor(r.x/ts);
   var y0 = Math.floor(r.y/ts);
   var x1 = Math.ceil((r.x+r.width)/ts);

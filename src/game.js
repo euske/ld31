@@ -1,20 +1,38 @@
 // game.js
 
-function Scene(tilemap)
+function Scene(tilemap, width, height)
 {
   this.tilemap = tilemap;
   this.buffer = document.createElement('canvas');
-  this.buffer.width = tilemap.width * tilemap.tilesize;
-  this.buffer.height = tilemap.height * tilemap.tilesize;
-  this.update();
+  this.buffer.width = width * tilemap.tilesize;
+  this.buffer.height = height * tilemap.tilesize;
+  this.maprect = new Rectangle(-1, -1, width, height);
 }
 Scene.prototype.repaint = function (ctx)
 {
   ctx.drawImage(this.buffer, 0, 0);
 }
-Scene.prototype.update = function ()
+Scene.prototype.update = function (rect, margin)
 {
-  this.tilemap.render(this.buffer.getContext('2d'));
+  var r = this.tilemap.coord2map(rect.inset(margin, margin));
+  var dst = this.maprect.copy();
+  if (r.x < dst.x) {
+    dst.x = r.x;
+  } else if (dst.x+dst.width < r.x+r.width) {
+    dst.x = r.x+r.width - dst.width;
+  }
+  if (r.y < dst.y) {
+    dst.y = r.y;
+  } else if (dst.y+dst.height < r.y+r.height) {
+    dst.y = r.y+r.height - dst.width;
+  }
+  dst.x = clamp(0, dst.x, this.tilemap.width-dst.width);
+  dst.y = clamp(0, dst.y, this.tilemap.height-dst.height);
+  if (!this.maprect.equals(dst)) {
+    this.maprect = dst;
+    this.tilemap.render(this.buffer.getContext('2d'),
+			dst.x, dst.y, dst.width, dst.height);
+  }
 }
 Scene.prototype.collide = function (rect, vx, vy)
 {
@@ -26,7 +44,7 @@ Scene.prototype.pick = function (rect)
   var tilemap = this.tilemap;
   var f = function (x,y) { return (tilemap.get(x,y) == 2); };
   var g = function (x,y) { if (tilemap.get(x,y) == 2) { tilemap.set(x,y,0); } };
-  if (tilemap.apply(rect, f)) {
+  if (tilemap.apply(tilemap.coord2map(rect), f)) {
     tilemap.apply(rect, g);
     return true;
   }
@@ -48,9 +66,10 @@ Player.prototype.idle = function ()
   var d = this.scene.collide(this.rect, vx, vy);
   d.x = this.scene.collide(this.rect, vx, d.y).x;
   d.y = this.scene.collide(this.rect, d.x, vy).y;
-  this.rect.move(d.x, d.y);
+  this.rect.x += d.x;
+  this.rect.y += d.y;
+  this.scene.update(this.rect, 100);
   if (this.scene.pick(this.rect)) {
-    this.scene.update();
     this.game.addscore(+1);
   }
 }
@@ -149,8 +168,9 @@ Game.prototype.init = function ()
     [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
   ]);
   var tilemap = new TileMap(tilesize, this.images.tiles, map);
-  this.scene = new Scene(tilemap);
+  this.scene = new Scene(tilemap, 10, 5);
   this.player = new Player(this, this.scene, tilesize, tilesize);
+  this.scene.update(this.player.rect);
   this.score = 0;
   this.focus();
 }
