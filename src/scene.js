@@ -2,35 +2,47 @@
 
 function Crack(x, y)
 {
-  this.pts = [new Point(x,y)];
+  this.origin = new Point(x,y);
+  this.pts = [];
 }
+
 Crack.prototype.spread = function ()
 {
-  while (1) {
-    var p = this.pts[rnd(this.pts.length)];
-    var q = p.copy();
-    switch (rnd(4)) {
-    case 0: q.x--; break;
-    case 1: q.x++; break;
-    case 2: q.y--; break; 
-    case 3: q.y++; break;
-    }
-    var found = -1;
-    for (var i = 0; i < this.pts.length; i++) {
-      if (q.equals(this.pts[i])) {
-	found = i;
-	break;
+  var q;
+  if (this.pts.length == 0) {
+    q = this.origin;
+  } else {
+    while (1) {
+      var p = this.pts[rnd(this.pts.length)];
+      q = p.copy();
+      switch (rnd(4)) {
+      case 0: q.x--; break;
+      case 1: q.x++; break;
+      case 2: q.y--; break; 
+      case 3: q.y++; break;
       }
-    }
-    if (found < 0) break;
-    if (rnd(3) == 0) {
-      this.pts.splice(i, 1);
+      var found = -1;
+      for (var i = 0; i < this.pts.length; i++) {
+	if (q.equals(this.pts[i])) {
+	  found = i;
+	  break;
+	}
+      }
+      if (found < 0) break;
     }
   }
   this.pts.push(q);
   return q;
 }
 
+Crack.prototype.shrink = function ()
+{
+  if (0 < this.pts.length) {
+    return this.pts.pop();
+  } else {
+    return null;
+  }
+}
 
 function Scene(tilemap, width, height)
 {
@@ -131,5 +143,17 @@ Scene.prototype.generate = function ()
     var p = crack.spread();
     this.tilemap.set(p.x, p.y, Tile.Empty);
     this.invalidate();
+  }
+}
+
+Scene.prototype.rewind = function ()
+{
+  if (0 < this.cracks.length) {
+    var crack = this.cracks[rnd(this.cracks.length)];
+    var p = crack.shrink();
+    if (p != null) {
+      this.tilemap.set(p.x, p.y, Tile.Floor);
+      this.invalidate();
+    }
   }
 }

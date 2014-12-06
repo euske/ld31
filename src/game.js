@@ -189,15 +189,28 @@ Game.prototype.init = function ()
   this.updateScore(0);
   this.updateHealth(0);
   this.focus();
-  this.audios.intro.play();
+  this.music = this.audios.intro;
+  this.mt = Date.now() + this.music.duration*1000;
+  this.music.play();
 }
 
 Game.prototype.idle = function ()
 {
   this.scene.generate();
   this.player.idle();
-  if (this.player.isDead()) {
-    this.init();
+  while (this.player.isDead()) {
+    for (var i = 0; i < rnd(10,100); i++) {
+      this.scene.rewind();
+    }
+  }
+  if (this.music != null) {
+    if (this.mt <= Date.now()) {
+      this.music.pause();
+      this.music = this.audios.music;
+      this.music.play();
+      this.mt = Date.now() + this.music.duration*1000;
+    }
+    this.mt++;
   }
   this.t++;
 }
@@ -205,12 +218,16 @@ Game.prototype.idle = function ()
 Game.prototype.focus = function (ev)
 {
   this.active = true;
-  this.audios.music.play();
+  if (this.music != null) {
+    this.music.play();
+  }
 }
 
 Game.prototype.blur = function (ev)
 {
-  this.audios.music.pause();
+  if (this.music != null) {
+    this.music.pause();
+  }
   this.active = false;
 }
 

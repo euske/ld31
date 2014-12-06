@@ -103,3 +103,41 @@ Tile.getSide = function (ul,uu,ur, ll, rr, dl,dd,dr)
     return 0;
   }
 }
+
+// STILL FILLING THIS OUT FOR tilemap_wall.png
+// Wall Tiles are 2.5x + 3px tall and overlap eachother
+// 	Walls at top of screen are rendered below walls closer to bottom
+//	Player at y=0 collides with tiles at y=0 and y=1 (2 tile collision)
+Tile.getSideWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
+{
+//		!ul && !uu && !ur && !ll && !rr && !dl && !dd && !dr
+  if (!ul && !uu && !ur && ll && rr) {
+    return 2;
+  } else if (uu && ll && rr) {
+    return 3;
+  } else if (ul && !uu && !ur && ll && !rr) {
+    return 4;
+  } else if (uu && ll && rr) {
+    return 5;
+  } else if (uu && ll && rr) {
+    return 6;
+  } else if (uu && ll && rr) {
+    return 7;
+  } else if (!ul && !uu && !ur && !ll && rr) {
+    return 8;
+  } else if (!uu && ll && rr) {
+    return 9;
+  } else if (!ul && !uu && !ur && ll && !rr) {
+    return 10;
+  } else if (!ul && !uu && ur && !ll && rr) {
+    return 11;
+  } else if (!ul && !uu && ur && !ll && rr) {
+    return 12;
+  } else if (!ul && !uu && ur && !ll && rr) {
+    return 13;
+  } else if (!uu && ll && rr) {
+    return 14;
+  } else {
+    return 0;
+  }
+}
