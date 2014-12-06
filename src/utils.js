@@ -67,6 +67,14 @@ Point.prototype.toString = function ()
 {
   return '('+this.x+', '+this.y+')';
 }
+Point.prototype.equals = function (p)
+{
+  return (this.x == p.x && this.y == p.y);
+}
+Point.prototype.copy = function ()
+{
+  return new Point(this.x, this.y);
+}
 Point.prototype.move = function (dx, dy)
 {
   return new Point(this.x+dx, this.y+dy);

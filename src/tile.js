@@ -33,15 +33,15 @@ Tile.getSide = function (ul,uu,ur, ll, rr, dl,dd,dr)
     return 12;
   } else if (uu && ll && rr && dd) {
     return 13;
-  } else if (ul && !uu && !ur && ll && !rr && dl && !dd && !dr) {
+  } else if (!uu && !ur && ll && !rr && !dd && !dr) {
     return 14;
-  } else if (!ul && !uu && ur && !ll && rr && !dl && !dd && dr) {
+  } else if (!ul && !uu && !ll && rr && !dl && !dd) {
     return 15;
-  } else if (ul && !uu && ur && ll && rr && dl && !dd && dr) {
+  } else if (!uu && ll && rr && !dd) {
     return 16;
   } else if (!ul && !uu && !ur && !ll && !rr && !dl && !dd && dr) {
     return 17;
-  } else if (!ul && !uu && !ur && !ll && !rr && dl && dd && dr) {
+  } else if (!ul && !uu && !ur && !ll && !rr && dd) {
     return 18;
   } else if (!ul && !uu && !ur && !ll && !rr && dl && !dd && !dr) {
     return 19;
@@ -49,25 +49,25 @@ Tile.getSide = function (ul,uu,ur, ll, rr, dl,dd,dr)
     return 20;
   } else if (ul && !uu && !ur && !ll && !rr && !dl && !dd && dr) {
     return 21;
-  } else if (!ul && !uu && ur && !ll && rr && dl && !dd && dr) {
+  } else if (!ul && !uu && !ll && rr && dl && !dd) {
     return 22;
-  } else if (ul && !uu && !ur && ll && !rr && dl && !dd && dr) {
+  } else if (!uu && !ur && ll && !rr && !dd && dr) {
     return 23;
-  } else if (ul && !uu && ur && ll && !rr && dl && !dd && !dr) {
+  } else if (!uu && ur && ll && !rr && !dd && !dr) {
     return 24;
-  } else if (ul && !uu && ur && !ll && rr && !dl && !dd && dr) {
+  } else if (ul && !uu && !ll && rr && !dl && !dd) {
     return 25;
-  } else if (ul && uu && ur && ll && !rr && dl && !dd && dr) {
+  } else if (uu && ll && !rr && !dd && dr) {
     return 26;
-  } else if (ul && uu && ur && !ll && rr && dl && !dd && dr) {
+  } else if (uu && !ll && rr && dl && !dd) {
     return 27;
-  } else if (ul && !uu && ur && ll && !rr && dl && dd && dr) {
+  } else if (!uu && ur && ll && !rr && dd) {
     return 28;
-  } else if (ul && !uu && ur && !ll && rr && dl && dd && dr) {
+  } else if (ul && !uu && !ll && rr && dd) {
     return 29;
-  } else if (!ul && !uu && ur && !ll && !rr && dl && dd && dr) {
+  } else if (!ul && !uu && ur && !ll && !rr && dd) {
     return 30;
-  } else if (ul && !uu && !ur && !ll && !rr && dl && dd && dr) {
+  } else if (ul && !uu && !ur && !ll && !rr && dd) {
     return 31;
   } else if (ul && !uu && ur && !ll && !rr && !dl && !dd && !dr) {
     return 32;
@@ -77,15 +77,15 @@ Tile.getSide = function (ul,uu,ur, ll, rr, dl,dd,dr)
     return 34;
   } else if (ul && !uu && ur && !ll && !rr && dl && !dd && dr) {
     return 35;
-  } else if (ul && uu && ur && !ll && !rr && dl && !dd && !dr) {
+  } else if (uu && !ll && !rr && dl && !dd && !dr) {
     return 36;
-  } else if (ul && uu && ur && !ll && !rr && !dl && !dd && dr) {
+  } else if (uu && !ll && !rr && !dl && !dd && dr) {
     return 37;
-  } else if (ul && uu && ur && !ll && !rr && dl && !dd && dr) {
+  } else if (uu && !ll && !rr && dl && !dd && dr) {
     return 38;
-  } else if (ul && !uu && ur && ll && !rr && dl && !dd && dr) {
+  } else if (!uu && ur && ll && !rr && !dd && dr) {
     return 39;
-  } else if (ul && !uu && ur && !ll && rr && dl && !dd && dr) {
+  } else if (ul && !uu && !ll && rr && dl && !dd) {
     return 40;
   } else if (!ul && !uu && ur && !ll && !rr && dl && !dd && dr) {
     return 41;
@@ -93,6 +93,8 @@ Tile.getSide = function (ul,uu,ur, ll, rr, dl,dd,dr)
     return 42;
   } else if (uu && !ll && !rr && dd) {
     return 43;
+  } else if (ul && !uu && ur && !ll && !rr && dd) {
+    return 44;
   } else {
     return 0;
   }

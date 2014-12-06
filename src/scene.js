@@ -1,5 +1,37 @@
 // scene.js
 
+function Crack(x, y)
+{
+  this.pts = [new Point(x,y)];
+}
+Crack.prototype.spread = function ()
+{
+  while (1) {
+    var p = this.pts[rnd(this.pts.length)];
+    var q = p.copy();
+    switch (rnd(4)) {
+    case 0: q.x--; break;
+    case 1: q.x++; break;
+    case 2: q.y--; break; 
+    case 3: q.y++; break;
+    }
+    var found = -1;
+    for (var i = 0; i < this.pts.length; i++) {
+      if (q.equals(this.pts[i])) {
+	found = i;
+	break;
+      }
+    }
+    if (found < 0) break;
+    if (rnd(3) == 0) {
+      this.pts.splice(i, 1);
+    }
+  }
+  this.pts.push(q);
+  return q;
+}
+
+
 function Scene(tilemap, width, height)
 {
   this.tilemap = tilemap;
@@ -10,6 +42,12 @@ function Scene(tilemap, width, height)
   this.mapimage = document.createElement('canvas');
   this.mapimage.width = this.window.width + tilemap.tilesize;
   this.mapimage.height = this.window.height + tilemap.tilesize;
+  this.cracks = [];
+  for (var i = 0; i < 10; i++) {
+    var x = rnd(tilemap.width);
+    var y = rnd(tilemap.height);
+    this.cracks.push(new Crack(x, y));
+  }
   this.invalidate();
 }
 
@@ -72,12 +110,10 @@ Scene.prototype.pick = function (rect)
 
 Scene.prototype.generate = function ()
 {
-  var x1 = rnd(this.tilemap.width);
-  var y1 = rnd(this.tilemap.height);
-  switch (0) {
-  case 0:
-    this.tilemap.set(x1, y1, Tile.Empty);
-    break;
+  if (0 < this.cracks.length) {
+    var crack = this.cracks[rnd(this.cracks.length)];
+    var p = crack.spread();
+    this.tilemap.set(p.x, p.y, Tile.Empty);
+    this.invalidate();
   }
-  this.invalidate();
 }
