@@ -242,7 +242,7 @@ Game.prototype.action = function ()
 Game.prototype.updateScore = function (d)
 {
   this.score += d;
-  this.labels.score.innerHTML = ("Score: "+this.score);
+  this.labels.time.innerHTML = ("Score: "+this.score);
 }
 
 Game.prototype.updateHealth = function (d)
