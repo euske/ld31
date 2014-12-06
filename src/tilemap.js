@@ -37,6 +37,18 @@ TileMap.prototype.render = function (ctx, x, y, w, h)
     for (var dx = 0; dx < w; dx++) {
       var c = this.get(x+dx, y+dy);
       if (0 <= c) {
+	if (c == Tile.Empty) {
+	  c = Tile.getSide(
+	    (this.get(x+dx-1,y+dy-1) != Tile.Empty),
+	    (this.get(x+dx+0,y+dy-1) != Tile.Empty),
+	    (this.get(x+dx+1,y+dy-1) != Tile.Empty),
+	    (this.get(x+dx-1,y+dy+0) != Tile.Empty),
+	    (this.get(x+dx+1,y+dy+0) != Tile.Empty),
+	    (this.get(x+dx-1,y+dy+1) != Tile.Empty),
+	    (this.get(x+dx+0,y+dy+1) != Tile.Empty),
+	    (this.get(x+dx+1,y+dy+1) != Tile.Empty)
+	  );
+	}
 	ctx.drawImage(this.tiles,
 		      ts*c, 0, ts, ts,
 		      ts*dx, ts*dy, ts, ts);

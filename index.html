@@ -41,14 +41,15 @@ function run()
 </script>
 <body onload="run();">
 <div align=center>
-  <canvas id="canvas" style="position:absolute; top:0; left:0; background:#61E8A4;"
+  <canvas id="canvas" style="position:relative; top:auto; left:auto; background:#61E8A4;"
 	  width="640" height="640"></canvas>
-  <div class="label" id="score" style="position:absolute; top:0; left:100px; color:black;"></div>
-  <div class="label" id="health" style="position:absolute; top:0; left:200px; color:black;"></div>
+  <div class="label" id="score" style="position:relative; top:-640px; left:-280px; color:black;"></div>
+  <div class="label" id="health" style="position:relative; top:-658px; left:-180px; color:black;"></div>
   <img id="tiles" src="assets/tilemap_floor.png" style="display:none;">
   <img id="sprites" src="assets/sprites.png" style="display:none;">
   <audio id="jump" type="audio/mpeg" src="assets/sounds/jump.mp3" preload="auto"></audio>
   <audio id="pick" type="audio/mpeg" src="assets/sounds/pick.mp3" preload="auto"></audio>
-  <audio id="music" type="audio/mpeg" src="assets/musics/intro.mp3" loop="true" preload="auto"></audio>
+  <audio id="intro" type="audio/mpeg" src="assets/musics/intro_jingle_2.mp3" preload="auto"></audio>
+  <audio id="music" type="audio/mpeg" src="assets/musics/aaa.mp3" loop="true" preload="auto"></audio>
 </div>
 </body>

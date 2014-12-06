@@ -77,22 +77,6 @@ Scene.prototype.generate = function ()
   switch (0) {
   case 0:
     this.tilemap.set(x1, y1, Tile.Empty);
-    for (var dy = -1; dy <= +1; dy++) {
-      for (var dx = -1; dx <= +1; dx++) {
-	var x = x1+dx;
-	var y = y1+dy;
-	var c = Tile.getSide(
-	  (this.tilemap.get(x-1,y-1) == Tile.Floor),
-	  (this.tilemap.get(x+0,y-1) == Tile.Floor),
-	  (this.tilemap.get(x+1,y-1) == Tile.Floor),
-	  (this.tilemap.get(x-1,y+0) == Tile.Floor),
-	  (this.tilemap.get(x+1,y+0) == Tile.Floor),
-	  (this.tilemap.get(x-1,y+1) == Tile.Floor),
-	  (this.tilemap.get(x+0,y+1) == Tile.Floor),
-	  (this.tilemap.get(x+1,y+1) == Tile.Floor));
-	this.tilemap.set(x,y,c);
-      }
-    }
     break;
   }
   this.invalidate();

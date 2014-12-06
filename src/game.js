@@ -3,22 +3,31 @@
 function Player(game, scene, width, height)
 {
   this.speed = 8;
+  this.maxjump = 20;
   this.game = game;
   this.scene = scene;
   this.rect = new Rectangle(0, 0, width, height);
+  this.jumping = -1;
   this.vx = this.vy = 0;
+  this.jvx = this.jvy = 0;
 }
 
 Player.prototype.idle = function ()
 {
-  var vx = this.speed*this.vx;
-  var vy = this.speed*this.vy;
-  var d = this.scene.collide(this.rect, vx, vy);
-  d.x = this.scene.collide(this.rect, vx, d.y).x;
-  d.y = this.scene.collide(this.rect, d.x, vy).y;
+  var vx = this.vx;
+  var vy = this.vy;
+  var d = this.scene.collide(this.rect, this.speed*vx, this.speed*vy);
+  d.x = this.scene.collide(this.rect, this.speed*vx, d.y).x;
+  d.y = this.scene.collide(this.rect, d.x, this.speed*vy).y;
   this.rect.x += d.x;
   this.rect.y += d.y;
   this.scene.setCenter(this.rect.inset(100, 100));
+  if (0 <= this.jumping) {
+    this.jumping++;
+    if (this.maxjump <= this.jumping) {
+      this.jumping = -1;
+    }
+  }
   if (this.scene.pick(this.rect)) {
     this.game.audios.pick.play();
     this.game.updateScore(+1);
@@ -30,8 +39,25 @@ Player.prototype.repaint = function (ctx)
   var x = this.rect.x - this.scene.window.x;
   var y = this.rect.y - this.scene.window.y;
   ctx.drawImage(this.game.images.sprites,
+		this.rect.width, 0, this.rect.width, this.rect.height,
+		x, y, this.rect.width, this.rect.height);
+  if (0 <= this.jumping) {
+    var t = (this.jumping/this.maxjump)-0.5;
+    y -= (0.25-t*t)*this.maxjump * this.rect.height;
+  }
+  ctx.drawImage(this.game.images.sprites,
 		0, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
+}
+
+Player.prototype.jump = function ()
+{
+  if (this.jumping < 0) {
+    this.game.audios.jump.play();
+    this.jvx = this.vx;
+    this.jvy = this.vy;
+    this.jumping = 0;
+  }
 }
 
 function Game(canvas, images, audios, labels)
@@ -81,6 +107,9 @@ Game.prototype.keydown = function (ev)
     this.action();
     break;
   case 112:			// F1
+    break;
+  case 80:			// P
+    this.active = !this.active;
     break;
   }
 }
@@ -138,6 +167,7 @@ Game.prototype.init = function ()
   this.updateScore(0);
   this.updateHealth(0);
   this.focus();
+  this.audios.intro.play();
 }
 
 Game.prototype.idle = function ()
