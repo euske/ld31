@@ -142,9 +142,7 @@ Game.prototype.init = function ()
 
 Game.prototype.idle = function ()
 {
-  if ((this.t % 3) == 0) {
-    this.scene.generate();
-  }
+  this.scene.generate();
   this.player.idle();
   this.t++;
 }

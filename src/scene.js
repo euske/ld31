@@ -72,11 +72,27 @@ Scene.prototype.pick = function (rect)
 
 Scene.prototype.generate = function ()
 {
-  var x = rnd(this.tilemap.width);
-  var y = rnd(this.tilemap.height);
-  switch (rnd(3)) {
+  var x1 = rnd(this.tilemap.width);
+  var y1 = rnd(this.tilemap.height);
+  switch (0) {
   case 0:
-    this.tilemap.set(x,y, Tile.Empty);
+    this.tilemap.set(x1, y1, Tile.Empty);
+    for (var dy = -1; dy <= +1; dy++) {
+      for (var dx = -1; dx <= +1; dx++) {
+	var x = x1+dx;
+	var y = y1+dy;
+	var c = Tile.getSide(
+	  (this.tilemap.get(x-1,y-1) == Tile.Floor),
+	  (this.tilemap.get(x+0,y-1) == Tile.Floor),
+	  (this.tilemap.get(x+1,y-1) == Tile.Floor),
+	  (this.tilemap.get(x-1,y+0) == Tile.Floor),
+	  (this.tilemap.get(x+1,y+0) == Tile.Floor),
+	  (this.tilemap.get(x-1,y+1) == Tile.Floor),
+	  (this.tilemap.get(x+0,y+1) == Tile.Floor),
+	  (this.tilemap.get(x+1,y+1) == Tile.Floor));
+	this.tilemap.set(x,y,c);
+      }
+    }
     break;
   }
   this.invalidate();
