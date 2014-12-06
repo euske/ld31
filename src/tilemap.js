@@ -29,12 +29,15 @@ TileMap.prototype.render = function (ctx, x, y, w, h)
   y = (typeof(y) !== 'undefined')? y : 0;
   w = (typeof(w) !== 'undefined')? w : this.width;
   h = (typeof(h) !== 'undefined')? h : this.height;
+  ctx.clearRect(0, 0, ts*w, ts*h);
   for (var dy = 0; dy < h; dy++) {
     for (var dx = 0; dx < w; dx++) {
       var c = this.get(x+dx, y+dy);
-      ctx.drawImage(this.tiles,
-		    ts*c, 0, ts, ts,
-		    ts*dx, ts*dy, ts, ts);
+      if (0 <= c) {
+	ctx.drawImage(this.tiles,
+		      ts*c, 0, ts, ts,
+		      ts*dx, ts*dy, ts, ts);
+      }
     }
   }
 }

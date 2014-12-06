@@ -8,8 +8,8 @@ function Scene(tilemap, width, height)
   this.mapheight = tilemap.height * tilemap.tilesize;
   this.maprect = new Rectangle(0, 0, width, height);
   this.mapimage = document.createElement('canvas');
-  this.mapimage.width = this.window.width;
-  this.mapimage.height = this.window.height;
+  this.mapimage.width = this.window.width + tilemap.tilesize;
+  this.mapimage.height = this.window.height + tilemap.tilesize;
   this.invalidate();
 }
 Scene.prototype.invalidate = function ()
@@ -17,7 +17,7 @@ Scene.prototype.invalidate = function ()
   this.maprect.x = -1;
   this.maprect.y = -1;
 }
-Scene.prototype.update = function (rect)
+Scene.prototype.setCenter = function (rect)
 {
   if (rect.x < this.window.x) {
     this.window.x = rect.x;
@@ -35,7 +35,7 @@ Scene.prototype.update = function (rect)
   var r = this.tilemap.coord2map(this.window);
   if (!this.maprect.equals(r)) {
     this.tilemap.render(this.mapimage.getContext('2d'),
-			r.x, r.y, r.width, r.height);
+			r.x, r.y, r.width+1, r.height+1);
     this.maprect = r;
   }
 }
@@ -64,6 +64,13 @@ Scene.prototype.pick = function (rect)
   }
   return false;
 }
+Scene.prototype.generate = function ()
+{
+  var x = rnd(this.tilemap.width);
+  var y = rnd(this.tilemap.height);
+  this.tilemap.set(x,y, rnd(3));
+  this.invalidate();
+}
 
 function Player(game, scene, width, height)
 {
@@ -82,7 +89,7 @@ Player.prototype.idle = function ()
   d.y = this.scene.collide(this.rect, d.x, vy).y;
   this.rect.x += d.x;
   this.rect.y += d.y;
-  this.scene.update(this.rect.inset(100, 100));
+  this.scene.setCenter(this.rect.inset(100, 100));
   if (this.scene.pick(this.rect)) {
     this.game.addscore(+1);
   }
@@ -180,36 +187,32 @@ Game.prototype.keyup = function (ev)
 Game.prototype.init = function ()
 {
   var tilesize = 32;
-  var map = copyarray([
-    [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
-    [0,1,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
-    [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
-    [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
-    [0,0,0,0, 1,0,0,0, 0,0,0,0, 2,2,0,0, 0,0,0,0],
-    
-    [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,1,0,0, 0,0,0,0],
-    [0,0,0,0, 0,1,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
-    [0,0,0,0, 0,0,0,0, 0,0,2,0, 0,0,0,0, 0,2,2,0],
-    [0,0,0,0, 0,0,0,0, 1,1,1,1, 0,0,0,0, 0,0,0,0],
-    [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
-    
-    [0,0,1,1, 1,1,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
-    [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
-    [0,0,0,0, 0,0,0,0, 1,1,0,0, 0,0,0,0, 1,1,0,0],
-    [0,0,0,0, 0,0,0,0, 0,0,2,0, 0,2,0,0, 0,0,0,0],
-    [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
-  ]);
+  var width = canvas.width/tilesize;
+  var height = canvas.height/tilesize;
+  var map = new Array(height*2);
+  for (var i = 0; i < map.length; i++) {
+    var row = new Array(width*2);
+    for (var j = 0; j < map.length; j++) {
+      row[j] = 0;
+    }
+    map[i] = row;
+  }
   var tilemap = new TileMap(tilesize, this.images.tiles, map);
-  this.scene = new Scene(tilemap, 10, 10);
+  this.scene = new Scene(tilemap, width, height);
   this.player = new Player(this, this.scene, tilesize, tilesize);
-  this.scene.update(this.player.rect);
+  this.scene.setCenter(this.player.rect);
   this.score = 0;
+  this.t = 0;
   this.focus();
 }
 
 Game.prototype.idle = function ()
 {
+  if ((this.t % 3) == 0) {
+    this.scene.generate();
+  }
   this.player.idle();
+  this.t++;
 }
 
 Game.prototype.focus = function (ev)
