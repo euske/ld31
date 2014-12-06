@@ -8,6 +8,7 @@ function TileMap(tilesize, tiles, map)
   this.width = map[0].length;
   this.height = map.length;
 }
+
 TileMap.prototype.get = function (x, y)
 {
   if (0 <= x && 0 <= y && x < this.width && y < this.height) {
@@ -16,12 +17,14 @@ TileMap.prototype.get = function (x, y)
     return -1;
   }
 }
+
 TileMap.prototype.set = function (x, y, v)
 {
   if (0 <= x && 0 <= y && x < this.width && y < this.height) {
     this.map[y][x] = v;
   }
 }
+
 TileMap.prototype.render = function (ctx, x, y, w, h)
 {
   var ts = this.tilesize;
@@ -41,6 +44,7 @@ TileMap.prototype.render = function (ctx, x, y, w, h)
     }
   }
 }
+
 TileMap.prototype.coord2map = function (rect)
 {
   var ts = this.tilesize;
@@ -50,6 +54,7 @@ TileMap.prototype.coord2map = function (rect)
   var y1 = Math.ceil((rect.y+rect.height)/ts);
   return new Rectangle(x0, y0, x1-x0, y1-y0);
 }
+
 TileMap.prototype.apply = function (rect, f)
 {
   for (var dy = 0; dy < rect.height; dy++) {
@@ -61,6 +66,7 @@ TileMap.prototype.apply = function (rect, f)
   }
   return false;
 }
+
 TileMap.prototype.collide = function (rect, v, f)
 {
   var ts = this.tilesize;
