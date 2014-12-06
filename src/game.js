@@ -3,36 +3,48 @@
 function Scene(tilemap, width, height)
 {
   this.tilemap = tilemap;
-  this.buffer = document.createElement('canvas');
-  this.buffer.width = width * tilemap.tilesize;
-  this.buffer.height = height * tilemap.tilesize;
-  this.maprect = new Rectangle(-1, -1, width, height);
+  this.window = new Rectangle(0, 0, width*tilemap.tilesize, height*tilemap.tilesize);
+  this.mapwidth = tilemap.width * tilemap.tilesize;
+  this.mapheight = tilemap.height * tilemap.tilesize;
+  this.maprect = new Rectangle(0, 0, width, height);
+  this.mapimage = document.createElement('canvas');
+  this.mapimage.width = this.window.width;
+  this.mapimage.height = this.window.height;
+  this.invalidate();
+}
+Scene.prototype.invalidate = function ()
+{
+  this.maprect.x = -1;
+  this.maprect.y = -1;
+}
+Scene.prototype.update = function (rect)
+{
+  if (rect.x < this.window.x) {
+    this.window.x = rect.x;
+  } else if (this.window.x+this.window.width < rect.x+rect.width) {
+    this.window.x = rect.x+rect.width - this.window.width;
+  }
+  if (rect.y < this.window.y) {
+    this.window.y = rect.y;
+  } else if (this.window.y+this.window.height < rect.y+rect.height) {
+    this.window.y = rect.y+rect.height - this.window.width;
+  }
+  this.window.x = clamp(0, this.window.x, this.mapwidth-this.window.width);
+  this.window.y = clamp(0, this.window.y, this.mapheight-this.window.height);
+
+  var r = this.tilemap.coord2map(this.window);
+  if (!this.maprect.equals(r)) {
+    this.tilemap.render(this.mapimage.getContext('2d'),
+			r.x, r.y, r.width, r.height);
+    this.maprect = r;
+  }
 }
 Scene.prototype.repaint = function (ctx)
 {
-  ctx.drawImage(this.buffer, 0, 0);
-}
-Scene.prototype.update = function (rect, margin)
-{
-  var r = this.tilemap.coord2map(rect.inset(margin, margin));
-  var dst = this.maprect.copy();
-  if (r.x < dst.x) {
-    dst.x = r.x;
-  } else if (dst.x+dst.width < r.x+r.width) {
-    dst.x = r.x+r.width - dst.width;
-  }
-  if (r.y < dst.y) {
-    dst.y = r.y;
-  } else if (dst.y+dst.height < r.y+r.height) {
-    dst.y = r.y+r.height - dst.width;
-  }
-  dst.x = clamp(0, dst.x, this.tilemap.width-dst.width);
-  dst.y = clamp(0, dst.y, this.tilemap.height-dst.height);
-  if (!this.maprect.equals(dst)) {
-    this.maprect = dst;
-    this.tilemap.render(this.buffer.getContext('2d'),
-			dst.x, dst.y, dst.width, dst.height);
-  }
+  var ts = this.tilemap.tilesize;
+  var x0 = Math.floor(this.window.x/ts)*ts;
+  var y0 = Math.floor(this.window.y/ts)*ts;
+  ctx.drawImage(this.mapimage, x0-this.window.x, y0-this.window.y);
 }
 Scene.prototype.collide = function (rect, vx, vy)
 {
@@ -46,6 +58,7 @@ Scene.prototype.pick = function (rect)
   var g = function (x,y) { if (tilemap.get(x,y) == 2) { tilemap.set(x,y,0); } };
   if (tilemap.apply(tilemap.coord2map(rect), f)) {
     tilemap.apply(rect, g);
+    this.invalidate();
     return true;
   }
   return false;
@@ -68,16 +81,18 @@ Player.prototype.idle = function ()
   d.y = this.scene.collide(this.rect, d.x, vy).y;
   this.rect.x += d.x;
   this.rect.y += d.y;
-  this.scene.update(this.rect, 100);
+  this.scene.update(this.rect.inset(100, 100));
   if (this.scene.pick(this.rect)) {
     this.game.addscore(+1);
   }
 }
 Player.prototype.repaint = function (ctx)
 {
+  var x = this.rect.x - this.scene.window.x;
+  var y = this.rect.y - this.scene.window.y;
   ctx.drawImage(this.game.images.sprites,
 		0, 0, this.rect.width, this.rect.height,
-		this.rect.x, this.rect.y, this.rect.width, this.rect.height);
+		x, y, this.rect.width, this.rect.height);
 }
 
 function Game(canvas, images, audios, label)
@@ -168,7 +183,7 @@ Game.prototype.init = function ()
     [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
   ]);
   var tilemap = new TileMap(tilesize, this.images.tiles, map);
-  this.scene = new Scene(tilemap, 10, 5);
+  this.scene = new Scene(tilemap, 10, 10);
   this.player = new Player(this, this.scene, tilesize, tilesize);
   this.scene.update(this.player.rect);
   this.score = 0;
