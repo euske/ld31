@@ -54,10 +54,11 @@ Scene.prototype.collide = function (rect, vx, vy)
 Scene.prototype.pick = function (rect)
 {
   var tilemap = this.tilemap;
+  var r = tilemap.coord2map(rect);
   var f = function (x,y) { return (tilemap.get(x,y) == 2); };
   var g = function (x,y) { if (tilemap.get(x,y) == 2) { tilemap.set(x,y,0); } };
-  if (tilemap.apply(tilemap.coord2map(rect), f)) {
-    tilemap.apply(rect, g);
+  if (tilemap.apply(r, f)) {
+    tilemap.apply(r, g);
     this.invalidate();
     return true;
   }
@@ -102,6 +103,10 @@ function Game(canvas, images, audios, label)
   this.audios = audios;
   this.label = label;
   this.active = false;
+  this.key_left = false;
+  this.key_right = false;
+  this.key_up = false;
+  this.key_down = false;
 }
 
 Game.prototype.keydown = function (ev)
@@ -110,21 +115,25 @@ Game.prototype.keydown = function (ev)
   case 37:			// LEFT
   case 65:			// A
   case 72:			// H
+    this.key_left = true;
     this.player.vx = -1;
     break;
   case 39:			// RIGHT
   case 68:			// D
   case 76:			// L
+    this.key_right = true;
     this.player.vx = +1;
     break;
   case 38:			// UP
   case 87:			// W
   case 75:			// K
+    this.key_up = true;
     this.player.vy = -1;
     break;
   case 40:			// DOWN
   case 83:			// S
   case 74:			// J
+    this.key_down = true;
     this.player.vy = +1;
     break;
   case 13:			// ENTER
@@ -144,18 +153,26 @@ Game.prototype.keyup = function (ev)
   case 37:			// LEFT
   case 65:			// A
   case 72:			// H
+    this.key_left = false;
+    this.player.vx = (this.key_right) ? +1 : 0;
+    break;
   case 39:			// RIGHT
   case 68:			// D
   case 76:			// L
-    this.player.vx = 0;
+    this.key_right = false;
+    this.player.vx = (this.key_left) ? -1 : 0;
     break;
   case 38:			// UP
   case 87:			// W
   case 75:			// K
+    this.key_up = false;
+    this.player.vy = (this.key_down) ? +1 : 0;
+    break;
   case 40:			// DOWN
   case 83:			// S
   case 74:			// J
-    this.player.vy = 0;
+    this.key_down = false;
+    this.player.vy = (this.key_up) ? -1 : 0;
     break;
   }
 }
