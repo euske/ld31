@@ -93,38 +93,12 @@ Game.prototype.init = function ()
   this.player = new Player(this, this.scene, tilesize);
   this.scene.actors.push(this.player);
   this.ticks = 0;
-  this.score = 0;
   this.health = 10;
-  this.updateScore(0);
+  this.startTime = Date.now();
+  this.time = 0;
   this.updateHealth(0);
   this.play_music(this.audios.intro);
   this.focus();
-}
-
-Game.prototype.idle = function ()
-{
-  // move everything in the scene (including the player).
-  this.scene.idle(this.ticks);
-  // readjust the view.
-  this.scene.setCenter(this.player.rect.inset(-600, -600));
-  // player dead?
-  if (this.player.isDead()) {
-    this.audios.hurt.play();
-    while (this.player.isDead()) {
-      for (var i = 0; i < rnd(10,100); i++) {
-	this.scene.rewind();
-      }
-    }
-  }
-  // play the next music.
-  if (this.music != null) {
-    if (this.mdur <= this.music.currentTime) {
-      this.music.pause();
-      this.play_music(this.audios.music);
-    }
-  }
-  // increment the tick count.
-  this.ticks++;
 }
 
 Game.prototype.focus = function (ev)
@@ -155,6 +129,34 @@ Game.prototype.play_music = function (music)
   this.music.play();
 }
 
+Game.prototype.idle = function ()
+{
+  // move everything in the scene (including the player).
+  this.scene.idle(this.ticks);
+  // readjust the view.
+  this.scene.setCenter(this.player.rect.inset(-600, -600));
+  // player dead?
+  if (this.player.isDead()) {
+    this.audios.hurt.play();
+    while (this.player.isDead()) {
+      for (var i = 0; i < rnd(10,100); i++) {
+	this.scene.rewind();
+      }
+    }
+  }
+  // play the next music.
+  if (this.music != null) {
+    if (this.mdur <= this.music.currentTime) {
+      this.music.pause();
+      this.play_music(this.audios.music);
+    }
+  }
+  // increment the tick count.
+  this.ticks++;
+  this.time = Date.now()-this.startTime;
+  this.labels.time.innerHTML = ("Time: "+Math.floor(this.time*.001));
+}
+
 Game.prototype.repaint = function (ctx)
 {
   ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -177,12 +179,6 @@ Game.prototype.repaint = function (ctx)
 Game.prototype.action = function ()
 {
   this.player.jump();
-}
-
-Game.prototype.updateScore = function (d)
-{
-  this.score += d;
-  this.labels.time.innerHTML = ("Score: "+this.score);
 }
 
 Game.prototype.updateHealth = function (d)
