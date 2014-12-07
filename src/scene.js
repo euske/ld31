@@ -54,6 +54,8 @@ function Scene(tilemap, width, height)
   this.mapimage = document.createElement('canvas');
   this.mapimage.width = this.window.width + tilemap.tilesize;
   this.mapimage.height = this.window.height + tilemap.tilesize;
+  this.sprites = [];
+  // 
   this.cracks = [];
   for (var i = 0; i < 10; i++) {
     var x = rnd(tilemap.width);
@@ -61,6 +63,28 @@ function Scene(tilemap, width, height)
     this.cracks.push(new Crack(x, y));
   }
   this.invalidate();
+}
+
+Scene.prototype.idle = function (ticks)
+{
+  // change the level a bit.
+  this.generate();
+  for (var i = 0; i < this.sprites.length; i++) {
+    var sprite = this.sprites[i];
+    sprite.idle(ticks);
+  }
+}
+
+Scene.prototype.repaint = function (ctx)
+{
+  var ts = this.tilemap.tilesize;
+  var x0 = Math.floor(this.window.x/ts)*ts;
+  var y0 = Math.floor(this.window.y/ts)*ts;
+  ctx.drawImage(this.mapimage, x0-this.window.x, y0-this.window.y);
+  for (var i = 0; i < this.sprites.length; i++) {
+    var sprite = this.sprites[i];
+    sprite.repaint(ctx, sprite.rect.x-this.window.x, sprite.rect.y-this.window.y);
+  }
 }
 
 Scene.prototype.setCenter = function (rect)
@@ -107,14 +131,6 @@ Scene.prototype.invalidate = function ()
 {
   this.maprect.x = -1;
   this.maprect.y = -1;
-}
-
-Scene.prototype.repaint = function (ctx)
-{
-  var ts = this.tilemap.tilesize;
-  var x0 = Math.floor(this.window.x/ts)*ts;
-  var y0 = Math.floor(this.window.y/ts)*ts;
-  ctx.drawImage(this.mapimage, x0-this.window.x, y0-this.window.y);
 }
 
 Scene.prototype.collide = function (rect, vx, vy)

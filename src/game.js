@@ -1,87 +1,5 @@
 // game.js
 
-function Player(game, scene, width, height)
-{
-  this.speed = 8;
-  this.creep = 0.2;
-  this.maxjump = 20;
-  this.game = game;
-  this.scene = scene;
-  this.rect = new Rectangle(0, 0, width, height);
-  this.jumping = -1;
-  this.vx = this.vy = 0;
-}
-
-Player.prototype.idle = function (ticks)
-{
-  var vx = this.vx;
-  var vy = this.vy;
-
-  if (this.jumping < 0) {
-    var r = this.rect.inset(this.rect.width/2, this.rect.height/2);
-    if (this.scene.checkAny(r.move(-r.width, 0), Tile.Empty)) {
-      vx -= this.creep;
-    } else if (this.scene.checkAny(r.move(+r.width, 0), Tile.Empty)) {
-      vx += this.creep;
-    }
-    if (this.scene.checkAny(r.move(0, -r.height), Tile.Empty)) {
-      vy -= this.creep;
-    } else if (this.scene.checkAny(r.move(0, +r.height), Tile.Empty)) {
-      vy += this.creep;
-    }
-  }
-  
-  var d = this.scene.collide(this.rect, this.speed*vx, this.speed*vy);
-  d.x = this.scene.collide(this.rect, this.speed*vx, d.y).x;
-  d.y = this.scene.collide(this.rect, d.x, this.speed*vy).y;
-  this.rect.x += d.x;
-  this.rect.y += d.y;
-  this.scene.setCenter(this.rect.inset(-600, -600));
-  if (0 <= this.jumping) {
-    this.jumping++;
-    if (this.maxjump <= this.jumping) {
-      this.jumping = -1;
-    }
-  }
-  if (this.scene.pick(this.rect)) {
-    this.game.audios.pick.play();
-    this.game.updateScore(+1);
-  }
-}
-
-Player.prototype.repaint = function (ctx)
-{
-  var x = this.rect.x - this.scene.window.x;
-  var y = this.rect.y - this.scene.window.y;
-  ctx.drawImage(this.game.images.sprites,
-		this.rect.width, 0, this.rect.width, this.rect.height,
-		x, y, this.rect.width, this.rect.height);
-  if (0 <= this.jumping) {
-    var t = (this.jumping/this.maxjump)-0.5;
-    y -= (0.25-t*t)*6 * this.rect.height;
-  }
-  ctx.drawImage(this.game.images.sprites,
-		0, 0, this.rect.width, this.rect.height,
-		x, y, this.rect.width, this.rect.height);
-}
-
-Player.prototype.isDead = function ()
-{
-  if (0 <= this.jumping) {
-    return false;
-  }
-  var r = this.rect.inset(this.rect.width/2, this.rect.height/2);
-  return this.scene.checkAll(r, Tile.Empty);
-}
-
-Player.prototype.jump = function ()
-{
-  if (this.jumping < 0) {
-    this.game.audios.jump.play();
-    this.jumping = 0;
-  }
-}
-
 function Game(canvas, images, audios, labels)
 {
   this.canvas = canvas;
@@ -182,7 +100,7 @@ Game.prototype.init = function ()
   var tilemap = new TileMap(tilesize, this.images.tiles, map);
   this.scene = new Scene(tilemap, width, height);
   this.player = new Player(this, this.scene, tilesize, tilesize);
-  this.scene.setCenter(this.player.rect);
+  this.scene.sprites.push(this.player);
   this.ticks = 0;
   this.score = 0;
   this.health = 10;
@@ -194,8 +112,11 @@ Game.prototype.init = function ()
 
 Game.prototype.idle = function ()
 {
-  this.scene.generate();
-  this.player.idle(this.ticks);
+  // move everything in the scene (including the player).
+  this.scene.idle(this.ticks);
+  // readjust the view.
+  this.scene.setCenter(this.player.rect.inset(-600, -600));
+  // player dead?
   if (this.player.isDead()) {
     this.audios.hurt.play();
     while (this.player.isDead()) {
@@ -233,6 +154,7 @@ Game.prototype.blur = function (ev)
 
 Game.prototype.play_music = function (music)
 {
+  return; // disable music for now!
   this.mdur = music.duration;
   if (music.innerHTML) {
     this.mdur += parseFloat(music.innerHTML);
@@ -247,7 +169,6 @@ Game.prototype.repaint = function (ctx)
   ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   ctx.save();
   this.scene.repaint(ctx);
-  this.player.repaint(ctx);
   if (!this.active) {
     var size = 50;
     ctx.fillStyle = 'rgba(0,0,64, 0.5)'; // gray out
