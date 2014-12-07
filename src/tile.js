@@ -104,24 +104,22 @@ Tile.getSideFloor = function (ul,uu,ur, ll, rr, dl,dd,dr)
   }
 }
 
-// STILL FILLING THIS OUT FOR tilemap_wall.png
 // Wall Tiles are 2.5x + 3px tall and overlap eachother
 // 	Walls at top of screen are rendered below walls closer to bottom
 //	Player at y=0 collides with tiles at y=0 and y=1 (2 tile collision)
 Tile.getWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
 {
-//	0 is blank
-//	1 to 8 have collisions
-//	9 to 14 are edges
-//		!ul && !uu && !ur && !ll && !rr && !dl && !dd && !dr
-  if (ul && uu && ur && ll && rr && !dl && !dr) {
+//	1 to 20 are solid and have collisions
+//	everything else is an edge (0=blank/null)
+  if (uu && ll && rr && !dl && !dr) {
 	return 1;
-  } else if (ul && uu && ur && ll && rr && dl && !dr) {
+  } else if (uu && ll && rr && dl && !dr) {
 	return 2;
-  } else if (ul && uu && ur && ll && rr && !dl && dr) {
+  } else if (uu && ll && rr && !dl && dr) {
     return 3;
-  } else if (ul && uu && ur && ll && rr && dl && dr) {
+  } else if (uu && ll && rr && dl && dr) {
     return 4;
+	
   } else if (!ul && !uu && !ur && ll && rr && !dl && !dr) {
     return 5;
   } else if (ul && !uu && !ur && ll && rr && !dl && !dr) {
@@ -130,24 +128,59 @@ Tile.getWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
     return 7;
   } else if (ul && !uu && ur && ll && rr && !dl && !dr) {
     return 8;
-  } else if (!ul && !uu && ur && !ll && rr) {
+	
+  } else if (!ul && !uu && !ur && ll && rr && dl && !dr) {
     return 9;
-  } else if (ul && !uu && !ur && ll && !rr) {
+  } else if (ul && !uu && !ur && ll && rr && dl && !dr) {
     return 10;
-  } else if (ul && !uu && ur && ll && rr) {
+  } else if (!ul && !uu && ur && ll && rr && dl && !dr) {
     return 11;
-  } else if (!ul && !uu && !ur && !ll && rr && !dl && !dd && !dr) {
+  } else if (ul && !uu && ur && ll && rr && dl && !dr) {
     return 12;
-  } else if (!ul && !uu && !ur && !ll && !rr && !dl && !dd && !dr) {
+	
+  } else if (!ul && !uu && !ur && ll && rr && !dl && dr) {
     return 13;
-  } else if (!ul && !uu && !ur && !ll && !rr && !dl && !dd && !dr) {
+  } else if (ul && !uu && !ur && ll && rr && !dl && dr) {
     return 14;
-  } else if (!ul && !uu && !ur && !ll && rr && !dl && !dd && !dr) {
+  } else if (!ul && !uu && ur && ll && rr && !dl && dr) {
     return 15;
-  } else if (!ul && !uu && !ur && !ll && !rr && !dl && !dd && !dr) {
+  } else if (ul && !uu && ur && ll && rr && !dl && dr) {
     return 16;
-  } else if (!ul && !uu && !ur && !ll && !rr && !dl && !dd && !dr) {
+	
+  } else if (!ul && !uu && !ur && ll && rr && dl && dr) {
     return 17;
+  } else if (ul && !uu && !ur && ll && rr && dl && dr) {
+    return 18;
+  } else if (!ul && !uu && ur && ll && rr && dl && dr) {
+    return 19;
+  } else if (ul && !uu && ur && ll && rr && dl && dr) {
+    return 20;
+	
+  } else if (!uu && ur && !ll && rr) {
+    return 21;
+  } else if (ul && !uu && ll && !rr) {
+    return 22;
+  } else if (ul && !uu && ur && ll && rr) {
+    return 23;
+	
+  } else if (!uu && !ur && !ll && rr) {
+    return 24;
+  } else if (!ul && !uu && ll && !rr) {
+    return 25;
+  } else if (!ul && !uu && !ur && ll && rr) {
+    return 26;
+	
+  } else if (uu && !ll && rr) {
+    return 27;
+  } else if (uu && ll && !rr) {
+    return 28;
+  } else if (uu && ll && rr) {
+    return 29;
+	
+  } else if (ul && !uu && !ur && ll && rr) {
+    return 30;
+  } else if (!ul && !uu && ur && ll && rr) {
+    return 31;
   } else {
     return 0;
   }
