@@ -210,7 +210,6 @@ Game.prototype.idle = function ()
       this.music.play();
       this.mt = Date.now() + this.music.duration*1000;
     }
-    this.mt++;
   }
   this.t++;
 }

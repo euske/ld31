@@ -25,30 +25,19 @@ TileMap.prototype.set = function (x, y, v)
   }
 }
 
-TileMap.prototype.render = function (ctx, x, y, w, h)
+TileMap.prototype.render = function (ctx, x, y, w, h, f)
 {
   var ts = this.tilesize;
   x = (typeof(x) !== 'undefined')? x : 0;
   y = (typeof(y) !== 'undefined')? y : 0;
   w = (typeof(w) !== 'undefined')? w : this.width;
   h = (typeof(h) !== 'undefined')? h : this.height;
+  f = (typeof(f) !== 'undefined')? f : this.get;
   ctx.clearRect(0, 0, ts*w, ts*h);
   for (var dy = 0; dy < h; dy++) {
     for (var dx = 0; dx < w; dx++) {
-      var c = this.get(x+dx, y+dy);
+      var c = f(x+dx, y+dy);
       if (0 <= c) {
-	if (c == Tile.Empty) {
-	  c = Tile.getSideFloor(
-	    (this.get(x+dx-1,y+dy-1) != Tile.Empty),
-	    (this.get(x+dx+0,y+dy-1) != Tile.Empty),
-	    (this.get(x+dx+1,y+dy-1) != Tile.Empty),
-	    (this.get(x+dx-1,y+dy+0) != Tile.Empty),
-	    (this.get(x+dx+1,y+dy+0) != Tile.Empty),
-	    (this.get(x+dx-1,y+dy+1) != Tile.Empty),
-	    (this.get(x+dx+0,y+dy+1) != Tile.Empty),
-	    (this.get(x+dx+1,y+dy+1) != Tile.Empty)
-	  );
-	}
 	ctx.drawImage(this.tiles,
 		      ts*c, 0, ts, ts,
 		      ts*dx, ts*dy, ts, ts);

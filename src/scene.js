@@ -79,9 +79,26 @@ Scene.prototype.setCenter = function (rect)
   this.window.y = clamp(0, this.window.y, this.mapheight-this.window.height);
 
   var r = this.tilemap.coord2map(this.window);
+  var tilemap = this.tilemap;
   if (!this.maprect.equals(r)) {
+    var f = function (x, y) {
+      var c = tilemap.get(x, y);
+      if (c == Tile.Empty) {
+	c = Tile.getSideFloor(
+	  (tilemap.get(x-1,y-1) == Tile.Floor),
+	  (tilemap.get(x+0,y-1) == Tile.Floor),
+	  (tilemap.get(x+1,y-1) == Tile.Floor),
+	  (tilemap.get(x-1,y+0) == Tile.Floor),
+	  (tilemap.get(x+1,y+0) == Tile.Floor),
+	  (tilemap.get(x-1,y+1) == Tile.Floor),
+	  (tilemap.get(x+0,y+1) == Tile.Floor),
+	  (tilemap.get(x+1,y+1) == Tile.Floor)
+	);
+      }
+      return c;
+    };
     this.tilemap.render(this.mapimage.getContext('2d'),
-			r.x, r.y, r.width+1, r.height+1);
+			r.x, r.y, r.width+1, r.height+1, f);
     this.maprect = r;
   }
 }
