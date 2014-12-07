@@ -3,14 +3,11 @@
 // All Actors belong to the Scene object.
 
 // Actor
-function Actor(game, scene, ticks, spritesize)
+function Actor(rect)
 {
-  this.game = game;
-  this.scene = scene;
-  this.ticks = ticks;
-  this.spritesize = spritesize;
   this.alive = true;
-  this.rect = new Rectangle(0, 0, spritesize, spritesize);
+  this.layer = 0;
+  this.rect = rect;
 }
 
 Actor.prototype.idle = function (ticks)
@@ -25,6 +22,41 @@ Actor.prototype.repaint = function (ctx, x, y)
 		x, y, this.rect.width, this.rect.height);
 }
 
+// Transition: Actor
+function Transition(sprites, ticks, rect, delay, duration, callback)
+{
+  this.sprites = sprites;
+  this.ticks = ticks;
+  this.layer = 1;
+  this.rect = rect;
+  this.delay = delay;
+  this.duration = duration;
+  this.callback = callback;
+  this.i = 0;
+  this.alive = true;
+}
+
+Transition.prototype.idle = function (ticks)
+{
+  var dt = ticks-this.ticks;
+  if (this.duration < dt) {
+    this.alive = false;
+    if (this.callback) {
+      this.callback();
+    }
+  } else {
+    this.i = Math.floor(dt/this.delay);
+  }
+}
+
+Transition.prototype.repaint = function (ctx, x, y)
+{
+  // draw the thing.
+  ctx.drawImage(this.sprites,
+		this.rect.width*this.i, 0, this.rect.width, this.rect.height,
+		x, y, this.rect.width, this.rect.height);
+}
+
 // Player is an Actor.
 function Player(game, scene, ticks, spritesize)
 {
@@ -32,6 +64,7 @@ function Player(game, scene, ticks, spritesize)
   this.scene = scene;
   this.ticks = ticks;
   this.spritesize = spritesize;
+  this.layer = 0;
   this.alive = true;
   this.rect = new Rectangle(0, 0, spritesize, spritesize);
   

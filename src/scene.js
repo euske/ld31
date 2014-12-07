@@ -62,7 +62,8 @@ function Scene(game, tilesize, width, height)
     var y = rnd(height);
     this.cracks.push(new Crack(x, y));
   }
-  
+
+  this.game = game;
   this.tilesize = tilesize;
   this.tilemap = new TileMap(tilesize, game.images.tiles, map);
   this.window = new Rectangle(0, 0, width*tilesize, height*tilesize);
@@ -74,7 +75,7 @@ function Scene(game, tilesize, width, height)
 Scene.prototype.idle = function (ticks)
 {
   // change the level a bit.
-  this.change();
+  this.change(ticks);
   // move each actor.
   var removed = []
   for (var i = 0; i < this.actors.length; i++) {
@@ -135,6 +136,12 @@ Scene.prototype.setCenter = function (rect)
   this.tilemap.update(r, f);
 }
 
+Scene.prototype.addActor = function (actor)
+{
+  this.actors.push(actor);
+  this.actors.sort(function (a,b) { return (b.layer-a.layer); });
+}
+
 Scene.prototype.collide = function (rect, vx, vy)
 {
   var f = function (c) { return (c < 0 || c == Tile.Block); }
@@ -170,12 +177,16 @@ Scene.prototype.pick = function (rect)
   return false;
 }
 
-Scene.prototype.change = function ()
+Scene.prototype.change = function (ticks)
 {
   if (0 < this.cracks.length) {
     var crack = this.cracks[rnd(this.cracks.length)];
     var p = crack.spread();
-    this.tilemap.set(p.x, p.y, Tile.Empty);
+    var tilemap = this.tilemap;
+    var tr = new Transition(this.game.images.sprites_floor, ticks,
+			    this.tilemap.map2coord(p), 20, 40,
+			    (function() { tilemap.set(p.x, p.y, Tile.Empty); }));
+    this.addActor(tr);
   }
 }
 

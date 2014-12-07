@@ -95,7 +95,7 @@ Game.prototype.init = function ()
   this.ticks = 0;
   this.scene = new Scene(this, tilesize, width, height);
   this.player = new Player(this, this.scene, this.ticks, tilesize);
-  this.scene.actors.push(this.player);
+  this.scene.addActor(this.player);
   this.overlays = [];
   this.health = 10;
   this.updateHealth(0);
