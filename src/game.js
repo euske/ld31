@@ -92,16 +92,16 @@ Game.prototype.init = function ()
   var tilesize = 32;
   var width = this.canvas.width/tilesize;
   var height = this.canvas.height/tilesize;
+  this.ticks = 0;
   this.scene = new Scene(this, tilesize, width, height);
-  this.player = new Player(this, this.scene, tilesize);
+  this.player = new Player(this, this.scene, this.ticks, tilesize);
   this.scene.actors.push(this.player);
   this.overlays = [];
-  this.ticks = 0;
   this.health = 10;
   this.updateHealth(0);
   this.play_music(this.audios.intro);
   this.focus();
-  var title = new Title(this.images.title);
+  var title = new Overlay(this.images.title, this.ticks, 30);
   title.rect.x = (this.canvas.width-title.rect.width)/2;
   title.rect.y = (this.canvas.height-title.rect.height)/2;
   this.overlays.push(title);
@@ -161,7 +161,8 @@ Game.prototype.idle = function ()
   var removed = [];
   for (var i = 0; i < this.overlays.length; i++) {
     var overlay = this.overlays[i];
-    if (!overlay.idle(this.ticks)) {
+    overlay.idle(this.ticks);
+    if (!overlay.alive) {
       removed.push(overlay);
     }
   }

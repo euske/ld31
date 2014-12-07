@@ -3,11 +3,13 @@
 // All Actors belong to the Scene object.
 
 // Actor
-function Actor(game, scene, spritesize)
+function Actor(game, scene, ticks, spritesize)
 {
   this.game = game;
   this.scene = scene;
+  this.ticks = ticks;
   this.spritesize = spritesize;
+  this.alive = true;
   this.rect = new Rectangle(0, 0, spritesize, spritesize);
 }
 
@@ -24,11 +26,13 @@ Actor.prototype.repaint = function (ctx, x, y)
 }
 
 // Player is an Actor.
-function Player(game, scene, spritesize)
+function Player(game, scene, ticks, spritesize)
 {
   this.game = game;
   this.scene = scene;
+  this.ticks = ticks;
   this.spritesize = spritesize;
+  this.alive = true;
   this.rect = new Rectangle(0, 0, spritesize, spritesize);
   
   this.vx = this.vy = 0;

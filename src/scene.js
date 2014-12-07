@@ -74,11 +74,17 @@ function Scene(game, tilesize, width, height)
 Scene.prototype.idle = function (ticks)
 {
   // change the level a bit.
-  this.generate();
+  this.change();
+  // move each actor.
+  var removed = []
   for (var i = 0; i < this.actors.length; i++) {
     var actor = this.actors[i];
     actor.idle(ticks);
+    if (!actor.alive) {
+      removed.push(actor);
+    }
   }
+  removeArray(this.actors, removed);
 }
 
 Scene.prototype.repaint = function (ctx)
@@ -164,7 +170,7 @@ Scene.prototype.pick = function (rect)
   return false;
 }
 
-Scene.prototype.generate = function ()
+Scene.prototype.change = function ()
 {
   if (0 < this.cracks.length) {
     var crack = this.cracks[rnd(this.cracks.length)];
