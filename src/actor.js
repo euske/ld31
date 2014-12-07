@@ -1,5 +1,6 @@
 // actor.js
 
+// Generic Actor object
 function Actor(game, scene, spritesize)
 {
   this.game = game;
@@ -20,6 +21,7 @@ Actor.prototype.repaint = function (ctx, x, y)
 		x, y, this.rect.width, this.rect.height);
 }
 
+// Player is an Actor.
 function Player(game, scene, spritesize)
 {
   this.game = game;
@@ -27,11 +29,9 @@ function Player(game, scene, spritesize)
   this.spritesize = spritesize;
   this.rect = new Rectangle(0, 0, spritesize, spritesize);
   
-  this.speed = 8;
-  this.creep = 0.2;
-  this.maxjump = 20;
-  this.jumping = -1;
   this.vx = this.vy = 0;
+  this.maxjump = 20;		// max duration of jumping.
+  this.jumping = -1;		// jump counter.
 }
 
 Player.prototype.idle = function (ticks)
@@ -40,22 +40,26 @@ Player.prototype.idle = function (ticks)
   var vy = this.vy;
 
   if (this.jumping < 0) {
-    var r = this.rect.inset(this.rect.width/2, this.rect.height/2);
+    // slipping effect.
+    var ratio = 0.75;
+    var slipping = 0.2;
+    var r = this.rect.inset(this.rect.width*ratio, this.rect.height*ratio);
     if (this.scene.checkAny(r.move(-r.width, 0), Tile.Empty)) {
-      vx -= this.creep;
+      vx -= slipping;
     } else if (this.scene.checkAny(r.move(+r.width, 0), Tile.Empty)) {
-      vx += this.creep;
+      vx += slipping;
     }
     if (this.scene.checkAny(r.move(0, -r.height), Tile.Empty)) {
-      vy -= this.creep;
+      vy -= slipping;
     } else if (this.scene.checkAny(r.move(0, +r.height), Tile.Empty)) {
-      vy += this.creep;
+      vy += slipping;
     }
   }
   
-  var d = this.scene.collide(this.rect, this.speed*vx, this.speed*vy);
-  d.x = this.scene.collide(this.rect, this.speed*vx, d.y).x;
-  d.y = this.scene.collide(this.rect, d.x, this.speed*vy).y;
+  var speed = 8;
+  var d = this.scene.collide(this.rect, speed*vx, speed*vy);
+  d.x = this.scene.collide(this.rect, speed*vx, d.y).x;
+  d.y = this.scene.collide(this.rect, d.x, speed*vy).y;
   this.rect.x += d.x;
   this.rect.y += d.y;
   if (0 <= this.jumping) {
