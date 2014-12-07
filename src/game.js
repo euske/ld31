@@ -12,7 +12,7 @@ function Player(game, scene, width, height)
   this.vx = this.vy = 0;
 }
 
-Player.prototype.idle = function (t)
+Player.prototype.idle = function (ticks)
 {
   var vx = this.vx;
   var vy = this.vy;
@@ -183,35 +183,36 @@ Game.prototype.init = function ()
   this.scene = new Scene(tilemap, width, height);
   this.player = new Player(this, this.scene, tilesize, tilesize);
   this.scene.setCenter(this.player.rect);
-  this.t = 0;
+  this.ticks = 0;
   this.score = 0;
   this.health = 10;
   this.updateScore(0);
   this.updateHealth(0);
+  this.play_music(this.audios.intro);
   this.focus();
-  this.music = this.audios.intro;
-  this.mt = Date.now() + this.music.duration*1000;
-  this.music.play();
 }
 
 Game.prototype.idle = function ()
 {
   this.scene.generate();
-  this.player.idle(this.t);
-  while (this.player.isDead()) {
-    for (var i = 0; i < rnd(10,100); i++) {
-      this.scene.rewind();
+  this.player.idle(this.ticks);
+  if (this.player.isDead()) {
+    this.audios.hurt.play();
+    while (this.player.isDead()) {
+      for (var i = 0; i < rnd(10,100); i++) {
+	this.scene.rewind();
+      }
     }
   }
+  // play the next music.
   if (this.music != null) {
-    if (this.mt <= Date.now()) {
+    if (this.mdur <= this.music.currentTime) {
       this.music.pause();
-      this.music = this.audios.music;
-      this.music.play();
-      this.mt = Date.now() + this.music.duration*1000;
+      this.play_music(this.audios.music);
     }
   }
-  this.t++;
+  // increment the tick count.
+  this.ticks++;
 }
 
 Game.prototype.focus = function (ev)
@@ -228,6 +229,17 @@ Game.prototype.blur = function (ev)
     this.music.pause();
   }
   this.active = false;
+}
+
+Game.prototype.play_music = function (music)
+{
+  this.mdur = music.duration;
+  if (music.innerHTML) {
+    this.mdur += parseFloat(music.innerHTML);
+  }
+  this.music = music;
+  this.music.fastSeek(0);
+  this.music.play();
 }
 
 Game.prototype.repaint = function (ctx)

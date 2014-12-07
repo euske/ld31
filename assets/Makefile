@@ -3,7 +3,7 @@
 PYTHON=python
 LAME=lame
 
-ASSETS=sounds/jump.mp3 sounds/pick.mp3
+ASSETS=sounds/jump.mp3 sounds/pick.mp3 sounds/hurt.mp3
 
 all: $(ASSETS)
 
