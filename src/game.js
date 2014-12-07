@@ -87,11 +87,11 @@ Game.prototype.keyup = function (ev)
 Game.prototype.init = function ()
 {
   var tilesize = 32;
-  var width = canvas.width/tilesize;
-  var height = canvas.height/tilesize;
+  var width = this.canvas.width/tilesize;
+  var height = this.canvas.height/tilesize;
   this.scene = new Scene(this, tilesize, width, height);
-  this.player = new Player(this, this.scene, tilesize, tilesize);
-  this.scene.sprites.push(this.player);
+  this.player = new Player(this, this.scene, tilesize);
+  this.scene.actors.push(this.player);
   this.ticks = 0;
   this.score = 0;
   this.health = 10;

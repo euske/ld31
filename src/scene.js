@@ -67,16 +67,16 @@ function Scene(game, tilesize, width, height)
   this.window = new Rectangle(0, 0, width*tilesize, height*tilesize);
   this.mapwidth = this.tilemap.width * tilesize;
   this.mapheight = this.tilemap.height * tilesize;
-  this.sprites = [];
+  this.actors = [];
 }
 
 Scene.prototype.idle = function (ticks)
 {
   // change the level a bit.
   this.generate();
-  for (var i = 0; i < this.sprites.length; i++) {
-    var sprite = this.sprites[i];
-    sprite.idle(ticks);
+  for (var i = 0; i < this.actors.length; i++) {
+    var actor = this.actors[i];
+    actor.idle(ticks);
   }
 }
 
@@ -86,9 +86,9 @@ Scene.prototype.repaint = function (ctx)
   var x0 = Math.floor(this.window.x/ts)*ts;
   var y0 = Math.floor(this.window.y/ts)*ts;
   ctx.drawImage(this.tilemap.image, x0-this.window.x, y0-this.window.y);
-  for (var i = 0; i < this.sprites.length; i++) {
-    var sprite = this.sprites[i];
-    sprite.repaint(ctx, sprite.rect.x-this.window.x, sprite.rect.y-this.window.y);
+  for (var i = 0; i < this.actors.length; i++) {
+    var actor = this.actors[i];
+    actor.repaint(ctx, actor.rect.x-this.window.x, actor.rect.y-this.window.y);
   }
 }
 
