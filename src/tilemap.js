@@ -1,4 +1,6 @@
 // tilemap.js
+// TileMap is a generic framework that handles a scrollable tile map.
+// A game can have multiple TileMaps.
 
 function TileMap(tilesize, tiles, map)
 {

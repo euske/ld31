@@ -1,4 +1,5 @@
 // scene.js
+// Scene object takes care of every in-game object and the scrollable map.
 
 function Crack(x, y)
 {

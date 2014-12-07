@@ -1,4 +1,7 @@
 // game.js
+// Game: The main loop of the game.
+// It handles events and manages shared resources (images, audios, etc.)
+// It also handles the game states and music play.
 
 function Game(canvas, images, audios, labels)
 {
@@ -92,13 +95,16 @@ Game.prototype.init = function ()
   this.scene = new Scene(this, tilesize, width, height);
   this.player = new Player(this, this.scene, tilesize);
   this.scene.actors.push(this.player);
+  this.overlays = [];
   this.ticks = 0;
   this.health = 10;
-  this.startTime = Date.now();
-  this.time = 0;
   this.updateHealth(0);
   this.play_music(this.audios.intro);
   this.focus();
+  var title = new Title(this.images.title);
+  title.rect.x = (this.canvas.width-title.rect.width)/2;
+  title.rect.y = (this.canvas.height-title.rect.height)/2;
+  this.overlays.push(title);
 }
 
 Game.prototype.focus = function (ev)
@@ -151,10 +157,18 @@ Game.prototype.idle = function ()
       this.play_music(this.audios.music);
     }
   }
+  // move the overlays.
+  var removed = [];
+  for (var i = 0; i < this.overlays.length; i++) {
+    var overlay = this.overlays[i];
+    if (!overlay.idle(this.ticks)) {
+      removed.push(overlay);
+    }
+  }
+  removeArray(this.overlays, removed);
   // increment the tick count.
   this.ticks++;
-  this.time = Date.now()-this.startTime;
-  this.labels.time.innerHTML = ("Time: "+Math.floor(this.time*.001));
+  this.labels.time.innerHTML = ("Time: "+Math.floor(this.ticks/30));
 }
 
 Game.prototype.repaint = function (ctx)
@@ -162,6 +176,9 @@ Game.prototype.repaint = function (ctx)
   ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   ctx.save();
   this.scene.repaint(ctx);
+  for (var i = 0; i < this.overlays.length; i++) {
+    this.overlays[i].repaint(ctx);
+  }
   if (!this.active) {
     var size = 50;
     ctx.fillStyle = 'rgba(0,0,64, 0.5)'; // gray out

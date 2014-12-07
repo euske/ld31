@@ -1,6 +1,8 @@
 // actor.js
+// Actor: any in-game object that's animated (including Player).
+// All Actors belong to the Scene object.
 
-// Generic Actor object
+// Actor
 function Actor(game, scene, spritesize)
 {
   this.game = game;

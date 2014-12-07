@@ -1,4 +1,5 @@
 // tile.js
+// "Tile" is a static image for a non-animated object.
 
 Tile = {
   Empty: 0,
