@@ -89,16 +89,7 @@ Game.prototype.init = function ()
   var tilesize = 32;
   var width = canvas.width/tilesize;
   var height = canvas.height/tilesize;
-  var map = new Array(height*2);
-  for (var i = 0; i < map.length; i++) {
-    var row = new Array(width*2);
-    for (var j = 0; j < map.length; j++) {
-      row[j] = Tile.Floor;
-    }
-    map[i] = row;
-  }
-  var tilemap = new TileMap(tilesize, this.images.tiles, map);
-  this.scene = new Scene(tilemap, width, height);
+  this.scene = new Scene(this, tilesize, width, height);
   this.player = new Player(this, this.scene, tilesize, tilesize);
   this.scene.sprites.push(this.player);
   this.ticks = 0;

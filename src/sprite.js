@@ -94,4 +94,3 @@ Player.prototype.jump = function ()
     this.jumping = 0;
   }
 }
-

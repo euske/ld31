@@ -7,6 +7,10 @@ function TileMap(tilesize, tiles, map)
   this.map = map;
   this.width = map[0].length;
   this.height = map.length;
+  this.image = document.createElement('canvas');
+  this.image.width = tilesize*(this.width+1);
+  this.image.height = tilesize*(this.height+1);
+  this.window = new Rectangle(-1, -1, 0, 0);
 }
 
 TileMap.prototype.get = function (x, y)
@@ -23,16 +27,28 @@ TileMap.prototype.set = function (x, y, v)
   if (0 <= x && 0 <= y && x < this.width && y < this.height) {
     this.map[y][x] = v;
   }
+  this.invalidate();
 }
 
-TileMap.prototype.render = function (ctx, x, y, w, h, f)
+TileMap.prototype.invalidate = function ()
+{
+  this.window.x = -1;
+  this.window.y = -1;
+}
+
+TileMap.prototype.update = function (rect, f)
+{
+  f = (typeof(f) !== 'undefined')? f : this.get;
+  if (!this.window.equals(rect)) {
+    this.window = rect;
+    this.render(rect.x, rect.y, rect.width+1, rect.height+1, f);
+  }
+}
+
+TileMap.prototype.render = function (x, y, w, h, f)
 {
   var ts = this.tilesize;
-  x = (typeof(x) !== 'undefined')? x : 0;
-  y = (typeof(y) !== 'undefined')? y : 0;
-  w = (typeof(w) !== 'undefined')? w : this.width;
-  h = (typeof(h) !== 'undefined')? h : this.height;
-  f = (typeof(f) !== 'undefined')? f : this.get;
+  var ctx = this.image.getContext('2d');
   ctx.clearRect(0, 0, ts*w, ts*h);
   for (var dy = 0; dy < h; dy++) {
     for (var dx = 0; dx < w; dx++) {

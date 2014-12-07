@@ -44,25 +44,30 @@ Crack.prototype.shrink = function ()
   }
 }
 
-function Scene(tilemap, width, height)
+function Scene(game, tilesize, width, height)
 {
-  this.tilemap = tilemap;
-  this.window = new Rectangle(0, 0, width*tilemap.tilesize, height*tilemap.tilesize);
-  this.mapwidth = tilemap.width * tilemap.tilesize;
-  this.mapheight = tilemap.height * tilemap.tilesize;
-  this.maprect = new Rectangle(0, 0, width, height);
-  this.mapimage = document.createElement('canvas');
-  this.mapimage.width = this.window.width + tilemap.tilesize;
-  this.mapimage.height = this.window.height + tilemap.tilesize;
-  this.sprites = [];
-  // 
+  // initialize the level.
+  var map = new Array(height*2);
+  for (var i = 0; i < map.length; i++) {
+    var row = new Array(width*2);
+    for (var j = 0; j < map.length; j++) {
+      row[j] = Tile.Floor;
+    }
+    map[i] = row;
+  }
   this.cracks = [];
   for (var i = 0; i < 10; i++) {
-    var x = rnd(tilemap.width);
-    var y = rnd(tilemap.height);
+    var x = rnd(width);
+    var y = rnd(height);
     this.cracks.push(new Crack(x, y));
   }
-  this.invalidate();
+  
+  this.tilesize = tilesize;
+  this.tilemap = new TileMap(tilesize, game.images.tiles, map);
+  this.window = new Rectangle(0, 0, width*tilesize, height*tilesize);
+  this.mapwidth = this.tilemap.width * tilesize;
+  this.mapheight = this.tilemap.height * tilesize;
+  this.sprites = [];
 }
 
 Scene.prototype.idle = function (ticks)
@@ -77,10 +82,10 @@ Scene.prototype.idle = function (ticks)
 
 Scene.prototype.repaint = function (ctx)
 {
-  var ts = this.tilemap.tilesize;
+  var ts = this.tilesize;
   var x0 = Math.floor(this.window.x/ts)*ts;
   var y0 = Math.floor(this.window.y/ts)*ts;
-  ctx.drawImage(this.mapimage, x0-this.window.x, y0-this.window.y);
+  ctx.drawImage(this.tilemap.image, x0-this.window.x, y0-this.window.y);
   for (var i = 0; i < this.sprites.length; i++) {
     var sprite = this.sprites[i];
     sprite.repaint(ctx, sprite.rect.x-this.window.x, sprite.rect.y-this.window.y);
@@ -104,33 +109,23 @@ Scene.prototype.setCenter = function (rect)
 
   var r = this.tilemap.coord2map(this.window);
   var tilemap = this.tilemap;
-  if (!this.maprect.equals(r)) {
-    var f = function (x, y) {
-      var c = tilemap.get(x, y);
-      if (c == Tile.Empty) {
-	c = Tile.getSideFloor(
-	  (tilemap.get(x-1,y-1) == Tile.Floor),
-	  (tilemap.get(x+0,y-1) == Tile.Floor),
-	  (tilemap.get(x+1,y-1) == Tile.Floor),
-	  (tilemap.get(x-1,y+0) == Tile.Floor),
-	  (tilemap.get(x+1,y+0) == Tile.Floor),
-	  (tilemap.get(x-1,y+1) == Tile.Floor),
-	  (tilemap.get(x+0,y+1) == Tile.Floor),
-	  (tilemap.get(x+1,y+1) == Tile.Floor)
-	);
-      }
-      return c;
-    };
-    this.tilemap.render(this.mapimage.getContext('2d'),
-			r.x, r.y, r.width+1, r.height+1, f);
-    this.maprect = r;
-  }
-}
-
-Scene.prototype.invalidate = function ()
-{
-  this.maprect.x = -1;
-  this.maprect.y = -1;
+  var f = function (x, y) {
+    var c = tilemap.get(x, y);
+    if (c == Tile.Empty) {
+      c = Tile.getSideFloor(
+	(tilemap.get(x-1,y-1) == Tile.Floor),
+	(tilemap.get(x+0,y-1) == Tile.Floor),
+	(tilemap.get(x+1,y-1) == Tile.Floor),
+	(tilemap.get(x-1,y+0) == Tile.Floor),
+	(tilemap.get(x+1,y+0) == Tile.Floor),
+	(tilemap.get(x-1,y+1) == Tile.Floor),
+	(tilemap.get(x+0,y+1) == Tile.Floor),
+	(tilemap.get(x+1,y+1) == Tile.Floor)
+      );
+    }
+    return c;
+  };
+  this.tilemap.update(r, f);
 }
 
 Scene.prototype.collide = function (rect, vx, vy)
@@ -163,7 +158,6 @@ Scene.prototype.pick = function (rect)
   var g = function (x,y) { if (tilemap.get(x,y) == Tile.Cake) { tilemap.set(x,y,0); } };
   if (tilemap.apply(r, f)) {
     tilemap.apply(r, g);
-    this.invalidate();
     return true;
   }
   return false;
@@ -175,7 +169,6 @@ Scene.prototype.generate = function ()
     var crack = this.cracks[rnd(this.cracks.length)];
     var p = crack.spread();
     this.tilemap.set(p.x, p.y, Tile.Empty);
-    this.invalidate();
   }
 }
 
@@ -186,7 +179,6 @@ Scene.prototype.rewind = function ()
     var p = crack.shrink();
     if (p != null) {
       this.tilemap.set(p.x, p.y, Tile.Floor);
-      this.invalidate();
     }
   }
 }
