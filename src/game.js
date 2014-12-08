@@ -151,7 +151,7 @@ Game.prototype.idle = function ()
   this.scene.idle(this.ticks);
   if (this.player.ready) {
     // change the level a bit.
-    this.scene.change(this.ticks);
+    this.scene.transform(this.ticks);
     // move the player only when the scene is ready.
     this.player.idle(this.ticks);
     // player dead?
@@ -192,8 +192,7 @@ Game.prototype.repaint = function (ctx)
   ctx.save();
   // re-adjust the view.
   this.scene.setCenter(this.player.rect.inset(-600, -600));
-  this.scene.repaint(ctx);
-  this.player.repaint(ctx);
+  this.scene.repaint(ctx, this.player);
   for (var i = 0; i < this.overlays.length; i++) {
     this.overlays[i].repaint(ctx);
   }

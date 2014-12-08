@@ -29,7 +29,6 @@ TileMap.prototype.set = function (x, y, v)
   if (0 <= x && 0 <= y && x < this.width && y < this.height) {
     this.map[y][x] = v;
   }
-  this.invalidate();
 }
 
 TileMap.prototype.invalidate = function ()
@@ -56,9 +55,12 @@ TileMap.prototype.render = function (x, y, w, h, f)
     for (var dx = 0; dx < w; dx++) {
       var c = f(x+dx, y+dy);
       if (0 <= c) {
+	// Align the bottom left corner.
 	ctx.drawImage(this.tiles,
-		      ts*c, 0, ts, ts,
-		      ts*dx, ts*dy, ts, ts);
+		      ts*c, 0,
+		      ts, this.tiles.height,
+		      ts*dx, ts*dy+ts-this.tiles.height,
+		      ts, this.tiles.height);
       }
     }
   }

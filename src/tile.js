@@ -4,9 +4,14 @@
 Tile = {
   Empty: 0,
   Floor: 1,
-  Block: 100,
-  Cake: 101,
+  WallTop: 2,
+  WallBottom: 3,
 };
+
+Tile.getFloor = function ()
+{
+  return 1;
+}
 
 Tile.getSideFloor = function (ul,uu,ur, ll, rr, dl,dd,dr)
 {
@@ -108,56 +113,65 @@ Tile.getSideFloor = function (ul,uu,ur, ll, rr, dl,dd,dr)
 // Wall Tiles are 2.5x + 3px tall and overlap eachother
 // 	Walls at top of screen are rendered below walls closer to bottom
 //	Player at y=0 collides with tiles at y=0 and y=1 (2 tile collision)
+//      
 Tile.getWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
 {
-//	1 to 20 are solid and have collisions
-//	everything else is an edge (0=blank/null)
-  if (uu && ll && rr && !dl && !dr) {
-	return 1;
-  } else if (uu && ll && rr && dl && !dr) {
-	return 2;
-  } else if (uu && ll && rr && !dl && dr) {
+  //	1 to 20 are solid and have collisions
+  //	everything else is an edge (0=blank/null)
+  if (uu && !dl && !dr) {
+    return 1;
+  } else if (uu && dl && !dr) {
+    return 2;
+  } else if (uu && !dl && dr) {
     return 3;
-  } else if (uu && ll && rr && dl && dr) {
+  } else if (uu && dl && dr) {
     return 4;
 	
-  } else if (!ul && !uu && !ur && ll && rr && !dl && !dr) {
+  } else if (!ul && !uu && !ur && !dl && !dr) {
     return 5;
-  } else if (ul && !uu && !ur && ll && rr && !dl && !dr) {
+  } else if (ul && !uu && !ur && !dl && !dr) {
     return 6;
-  } else if (!ul && !uu && ur && ll && rr && !dl && !dr) {
+  } else if (!ul && !uu && ur && !dl && !dr) {
     return 7;
-  } else if (ul && !uu && ur && ll && rr && !dl && !dr) {
+  } else if (ul && !uu && ur && !dl && !dr) {
     return 8;
 	
-  } else if (!ul && !uu && !ur && ll && rr && dl && !dr) {
+  } else if (!ul && !uu && !ur && dl && !dr) {
     return 9;
-  } else if (ul && !uu && !ur && ll && rr && dl && !dr) {
+  } else if (ul && !uu && !ur && dl && !dr) {
     return 10;
-  } else if (!ul && !uu && ur && ll && rr && dl && !dr) {
+  } else if (!ul && !uu && ur && dl && !dr) {
     return 11;
-  } else if (ul && !uu && ur && ll && rr && dl && !dr) {
+  } else if (ul && !uu && ur && dl && !dr) {
     return 12;
 	
-  } else if (!ul && !uu && !ur && ll && rr && !dl && dr) {
+  } else if (!ul && !uu && !ur && !dl && dr) {
     return 13;
-  } else if (ul && !uu && !ur && ll && rr && !dl && dr) {
+  } else if (ul && !uu && !ur && !dl && dr) {
     return 14;
-  } else if (!ul && !uu && ur && ll && rr && !dl && dr) {
+  } else if (!ul && !uu && ur && !dl && dr) {
     return 15;
-  } else if (ul && !uu && ur && ll && rr && !dl && dr) {
+  } else if (ul && !uu && ur && !dl && dr) {
     return 16;
 	
-  } else if (!ul && !uu && !ur && ll && rr && dl && dr) {
+  } else if (!ul && !uu && !ur && dl && dr) {
     return 17;
-  } else if (ul && !uu && !ur && ll && rr && dl && dr) {
+  } else if (ul && !uu && !ur && dl && dr) {
     return 18;
-  } else if (!ul && !uu && ur && ll && rr && dl && dr) {
+  } else if (!ul && !uu && ur && dl && dr) {
     return 19;
-  } else if (ul && !uu && ur && ll && rr && dl && dr) {
+  } else if (ul && !uu && ur && dl && dr) {
     return 20;
-	
-  } else if (!uu && ur && !ll && rr) {
+  } else {
+    return 0;
+  }
+}
+
+Tile.getSideWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
+{
+  //	1 to 20 are solid and have collisions
+  //	everything else is an edge (0=blank/null)
+  if (!uu && ur && !ll && rr) {
     return 21;
   } else if (ul && !uu && ll && !rr) {
     return 22;

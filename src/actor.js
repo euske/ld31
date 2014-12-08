@@ -135,6 +135,7 @@ Player.prototype.repaint = function (ctx)
 
 Player.prototype.isDead = function ()
 {
+  return false;			// disable dying.
   if (0 <= this.jumping) {
     return false;
   }
