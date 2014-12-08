@@ -15,45 +15,56 @@ function Game(framerate, canvas, images, audios, labels)
   this.key_right = false;
   this.key_up = false;
   this.key_down = false;
+  this.state = -1;		// uninitialized.
 }
 
 Game.prototype.keydown = function (ev)
 {
-  switch (ev.keyCode) {
-  case 37:			// LEFT
-  case 65:			// A
-  case 72:			// H
-    this.key_left = true;
-    this.player.vx = -1;
+  switch (this.state) {
+  case 1:
+    this.state = 2;
     break;
-  case 39:			// RIGHT
-  case 68:			// D
-  case 76:			// L
-    this.key_right = true;
-    this.player.vx = +1;
+  case 3:
+    this.spawnPlayer();
     break;
-  case 38:			// UP
-  case 87:			// W
-  case 75:			// K
-    this.key_up = true;
-    this.player.vy = -1;
-    break;
-  case 40:			// DOWN
-  case 83:			// S
-  case 74:			// J
-    this.key_down = true;
-    this.player.vy = +1;
-    break;
-  case 13:			// ENTER
-  case 32:			// SPACE
-  case 90:			// Z
-  case 88:			// X
-    this.action();
-    break;
-  case 112:			// F1
-    break;
-  case 80:			// P
-    this.active = !this.active;
+  case 2:
+    switch (ev.keyCode) {
+    case 37:			// LEFT
+    case 65:			// A
+    case 72:			// H
+      this.key_left = true;
+      this.player.vx = -1;
+      break;
+    case 39:			// RIGHT
+    case 68:			// D
+    case 76:			// L
+      this.key_right = true;
+      this.player.vx = +1;
+      break;
+    case 38:			// UP
+    case 87:			// W
+    case 75:			// K
+      this.key_up = true;
+      this.player.vy = -1;
+      break;
+    case 40:			// DOWN
+    case 83:			// S
+    case 74:			// J
+      this.key_down = true;
+      this.player.vy = +1;
+      break;
+    case 13:			// ENTER
+    case 32:			// SPACE
+    case 90:			// Z
+    case 88:			// X
+      this.action();
+      break;
+    case 112:			// F1
+      break;
+    case 80:			// P
+      this.active = !this.active;
+      break;
+    }
     break;
   }
 }
@@ -96,26 +107,43 @@ Game.prototype.init = function ()
   this.ticks = 0;
   this.scene = new Scene(this, tilesize, width, height);
   this.player = new Player(this, this.scene, this.ticks, tilesize);
-  this.scene.addActor(this.player);
   this.overlays = [];
   this.play_music(this.audios.intro);
-  this.respawnPlayer();
+  this.state = 0;		// unspawned
   this.focus();
-  var title = new Overlay(this.images.title, this.ticks, this.framerate);
-  title.rect.x = (this.canvas.width-title.rect.width)/2;
-  title.rect.y = (this.canvas.height-title.rect.height)/2;
+  var title = new Overlay(this.images.title, this.ticks, this.framerate/3);
+  var cx = (this.canvas.width-title.rect.width)/2;
+  var cy = (this.canvas.height-title.rect.height)/2;
+  title.p0 = new Point(cx, cy*2);
+  title.p1 = new Point(cx, cy*1);
+  title.p2 = new Point(cx, cy*0);
   this.overlays.push(title);
+  this.spawnPlayer();
 }
 
-Game.prototype.respawnPlayer = function ()
+Game.prototype.spawnPlayer = function ()
 {
   this.player.rect.x = Math.floor(this.scene.mapwidth-this.player.rect.width)/2;
   this.player.rect.y = Math.floor(this.scene.mapheight-this.player.rect.height)/2;
-  this.player.ready = false;
+  this.scene.addActor(this.player);
+  this.scene.startForming(this.ticks, this.player.rect, 3);
   this.health = 10;
   this.updateHealth(0);
+  this.state = 1;		// unstarted
+}
+
+Game.prototype.unspawnPlayer = function ()
+{
+  var gameover = new Overlay(this.images.gameover, this.ticks, this.framerate/3);
+  var cx = (this.canvas.width-gameover.rect.width)/2;
+  var cy = (this.canvas.height-gameover.rect.height)/2;
+  gameover.p0 = new Point(cx*2, cy);
+  gameover.p1 = new Point(cx*1, cy);
+  gameover.p2 = new Point(cx*0, cy);
+  this.overlays.push(gameover);
+  this.scene.removeActor(this.player);
   this.scene.startCollapsing(this.ticks);
-  this.scene.startForming(this.ticks, this.player.rect, 10);
+  this.state = 3;
 }
 
 Game.prototype.focus = function (ev)
@@ -147,20 +175,24 @@ Game.prototype.play_music = function (music)
 
 Game.prototype.idle = function ()
 {
-  // move everything in the scene (including the player).
-  this.scene.idle(this.ticks);
-  if (this.player.ready) {
+  switch (this.state) {
+  case 0:
+  case 1:
+  case 3:
+    // move everything in the scene (including the player).
+    this.scene.idle(this.ticks);
+    break;
+  case 2:
+    // move everything in the scene (including the player).
+    this.scene.idle(this.ticks);
     // change the level a bit.
     this.scene.transform(this.ticks);
     // player dead?
     if (this.player.isDead()) {
       this.audios.hurt.play();
-      this.respawnPlayer();
+      this.unspawnPlayer();
     }
-  } else {
-    if (!this.player.isDead()) {
-      this.player.ready = true;
-    }
+    break;
   }
   // play the next music.
   if (this.music != null) {

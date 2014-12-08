@@ -67,7 +67,6 @@ function Player(game, scene, ticks, spritesize)
   this.spritesize = spritesize;
   this.layer = 0;
   this.alive = true;
-  this.ready = false;
   this.rect = new Rectangle(0, 0, spritesize, spritesize);
   
   this.vx = this.vy = 0;

@@ -155,6 +155,14 @@ Scene.prototype.addActor = function (actor)
   this.actors.sort(function (a,b) { return (b.layer-a.layer); });
 }
 
+Scene.prototype.removeActor = function (actor)
+{
+  var i = this.actors.indexOf(actor);
+  if (0 <= i) {
+    this.actors.splice(i, 1);
+  }
+}
+
 Scene.prototype.addTransition = function (x, y, transition)
 {
   this.transitions[y][x] = transition;
