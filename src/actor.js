@@ -2,9 +2,10 @@
 // Actor: any in-game object that's animated (including Player).
 // All Actors belong to the Scene object.
 
-// Actor
+// Actor: Base class for anything that moves.
 function Actor(rect)
 {
+  // Mandatory fields.
   this.alive = true;
   this.layer = 0;
   this.rect = rect;
@@ -16,36 +17,34 @@ Actor.prototype.idle = function (ticks)
 
 Actor.prototype.repaint = function (ctx, x, y)
 {
-  // draw the thing.
-  ctx.drawImage(this.game.images.sprites,
-		this.spritesize*0, 0, this.rect.width, this.rect.height,
+  // NEED TO BE OVERRIDEN
+  ctx.drawImage(image,
+		0, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
 }
 
 // Transition: Actor
-function Transition(sprites, ticks, rect, delay, duration, callback)
+function Transition(sprites, ticks, rect, delay, callback)
 {
   this.sprites = sprites;
   this.ticks = ticks;
   this.layer = 1;
   this.rect = rect;
   this.delay = delay;
-  this.duration = duration;
   this.callback = callback;
+  this.sprite_index = 0;
   this.i = 0;
   this.alive = true;
 }
 
 Transition.prototype.idle = function (ticks)
 {
-  var dt = ticks-this.ticks;
-  if (this.duration < dt) {
-    this.alive = false;
+  var i = Math.floor((ticks-this.ticks)/this.delay);
+  if (this.i != i) {
+    this.i = i;
     if (this.callback) {
-      this.callback();
+      this.callback(i);
     }
-  } else {
-    this.i = Math.floor(dt/this.delay);
   }
 }
 
@@ -53,7 +52,7 @@ Transition.prototype.repaint = function (ctx, x, y)
 {
   // draw the thing.
   ctx.drawImage(this.sprites,
-		this.rect.width*this.i, 0, this.rect.width, this.rect.height,
+		this.sprite_index*this.rect.width, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
 }
 

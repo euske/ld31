@@ -3,8 +3,9 @@
 // It handles events and manages shared resources (images, audios, etc.)
 // It also handles the game states and music play.
 
-function Game(canvas, images, audios, labels)
+function Game(framerate, canvas, images, audios, labels)
 {
+  this.framerate = framerate;
   this.canvas = canvas;
   this.images = images;
   this.audios = audios;
@@ -95,13 +96,15 @@ Game.prototype.init = function ()
   this.ticks = 0;
   this.scene = new Scene(this, tilesize, width, height);
   this.player = new Player(this, this.scene, this.ticks, tilesize);
+  this.player.rect.x = Math.floor(this.scene.mapwidth-this.player.rect.width)/2;
+  this.player.rect.y = Math.floor(this.scene.mapheight-this.player.rect.height)/2;
   this.scene.addActor(this.player);
   this.overlays = [];
   this.health = 10;
   this.updateHealth(0);
   this.play_music(this.audios.intro);
   this.focus();
-  var title = new Overlay(this.images.title, this.ticks, 30);
+  var title = new Overlay(this.images.title, this.ticks, this.framerate);
   title.rect.x = (this.canvas.width-title.rect.width)/2;
   title.rect.y = (this.canvas.height-title.rect.height)/2;
   this.overlays.push(title);
@@ -125,13 +128,12 @@ Game.prototype.blur = function (ev)
 
 Game.prototype.play_music = function (music)
 {
-  return; // disable music for now!
   this.mdur = music.duration;
   if (music.innerHTML) {
     this.mdur += parseFloat(music.innerHTML);
   }
   this.music = music;
-  this.music.fastSeek(0);
+  this.music.currentTime = 0;
   this.music.play();
 }
 
@@ -144,10 +146,9 @@ Game.prototype.idle = function ()
   // player dead?
   if (this.player.isDead()) {
     this.audios.hurt.play();
-    while (this.player.isDead()) {
-      for (var i = 0; i < rnd(10,100); i++) {
-	this.scene.rewind();
-      }
+    var n = rnd(10, 100);
+    for (var i = 0; i < n && this.player.isDead(); i++) {
+      this.scene.rewind();
     }
   }
   // play the next music.
@@ -169,7 +170,7 @@ Game.prototype.idle = function ()
   removeArray(this.overlays, removed);
   // increment the tick count.
   this.ticks++;
-  this.labels.time.innerHTML = ("Time: "+Math.floor(this.ticks/30));
+  this.labels.time.innerHTML = ("Time: "+Math.floor(this.ticks/this.framerate));
 }
 
 Game.prototype.repaint = function (ctx)

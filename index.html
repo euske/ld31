@@ -20,20 +20,20 @@ function run()
     for (var i = 0; i < a.length; i++) { d[a[i].id] = a[i]; }
     return d;
   }
+  var framerate = 30;
   var images = getprops(document.getElementsByTagName('img'));
   var audios = getprops(document.getElementsByTagName('audio'));
   var labels = getprops(document.getElementsByClassName('label'));
   var canvas = document.getElementById('canvas');
   var ctx = canvas.getContext('2d');
-  var game = new Game(canvas, images, audios, labels);
-  var dt = 1000/30;
+  var game = new Game(framerate, canvas, images, audios, labels);
   function idle() {
     if (game.active) {
       game.idle();
       game.repaint(ctx);
     }
   };
-  window.setInterval(idle, dt);
+  window.setInterval(idle, 1000/framerate);
   window.addEventListener('keydown', function (e) { game.keydown(e); });
   window.addEventListener('keyup', function (e) { game.keyup(e); });
   window.addEventListener('focus', function (e) { game.focus(e); game.repaint(ctx); });
@@ -45,7 +45,7 @@ function run()
 <div align=center>
   <div style="position:relative; width:640px;">
     <canvas id="canvas" style="position:absolute; top:0; left:0; background:#61E8A4;"
-	    width="640" height="640"></canvas>
+	    width="800" height="800"></canvas>
     <div class="label" id="time" style="position:absolute; top:0; left:0px; color:black;"></div>
     <div class="label" id="health" style="position:absolute; top:0; left:100px; color:black;"></div>
   </div>
@@ -54,6 +54,12 @@ function run()
   <img id="tiles" src="assets/images/tilemap_floor.png">
   <img id="sprites" src="assets/images/sprites.png">
   <img id="sprites_floor" src="assets/images/spritesheet_floor.png">
+  <img id="tiles_wall" src="assets/images/tilemap_walls.png">
+  <img id="sprites_wall" src="assets/images/spritesheet_walls.png">
+  <img id="tiles_lava" src="assets/images/tilemap_lava.png">
+  <img id="sprites_lava" src="assets/images/spritesheet_lava.png">
+  <img id="tiles_ice" src="assets/images/tilemap_ice.png">
+  <img id="sprites_ice" src="assets/images/spritesheet_ice.png">
   <img id="title" src="assets/images/title.png">
   <audio id="jump" type="audio/mpeg" src="assets/sounds/jump.mp3" preload="auto"></audio>
   <audio id="pick" type="audio/mpeg" src="assets/sounds/pick.mp3" preload="auto"></audio>

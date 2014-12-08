@@ -45,16 +45,41 @@ Crack.prototype.shrink = function ()
   }
 }
 
+function fillArray(a, x0, y0, w, h, c)
+{
+  for (var dy = 0; dy < h; dy++) {
+    var y = y0+dy;
+    if (0 <= y && y < a.length) {
+      var row = a[y];
+      for (var dx = 0; dx < w; dx++) {
+	var x = x0+dx;
+	if (0 <= x && x < row.length) {
+	  row[x] = c;
+	}
+      }
+    }
+  }
+}
+
 function Scene(game, tilesize, width, height)
 {
   // initialize the level.
-  var map = new Array(height*2);
+  var map = new Array(height);
   for (var i = 0; i < map.length; i++) {
-    var row = new Array(width*2);
-    for (var j = 0; j < map.length; j++) {
-      row[j] = Tile.Floor;
+    var row = new Array(width);
+    for (var j = 0; j < row.length; j++) {
+      row[j] = Tile.Empty;
     }
     map[i] = row;
+  }
+  var cx = Math.floor(width/2);
+  var cy = Math.floor(height/2);
+  for (var d = 0; d < 10; d++) {
+    var x = cx + rnd(-(d+1), d+1);
+    var y = cy + rnd(-(d+1), d+1);
+    var w = Math.min(rnd(5, 10), x-1, width-x-1);
+    var h = Math.min(rnd(5, 10), y-1, height-y-1);
+    fillArray(map, x, y, w, h, Tile.Floor);
   }
   this.cracks = [];
   for (var i = 0; i < 10; i++) {
@@ -93,10 +118,18 @@ Scene.prototype.repaint = function (ctx)
   var ts = this.tilesize;
   var x0 = Math.floor(this.window.x/ts)*ts;
   var y0 = Math.floor(this.window.y/ts)*ts;
+  for (var i = 0; i < this.actors.length; i++) {
+    var actor = this.actors[i];
+    if (actor.layer < 0) {
+      actor.repaint(ctx, actor.rect.x-this.window.x, actor.rect.y-this.window.y);
+    }
+  }
   ctx.drawImage(this.tilemap.image, x0-this.window.x, y0-this.window.y);
   for (var i = 0; i < this.actors.length; i++) {
     var actor = this.actors[i];
-    actor.repaint(ctx, actor.rect.x-this.window.x, actor.rect.y-this.window.y);
+    if (0 <= actor.layer) {
+      actor.repaint(ctx, actor.rect.x-this.window.x, actor.rect.y-this.window.y);
+    }
   }
 }
 
@@ -181,12 +214,24 @@ Scene.prototype.change = function (ticks)
 {
   if (0 < this.cracks.length) {
     var crack = this.cracks[rnd(this.cracks.length)];
-    var p = crack.spread();
     var tilemap = this.tilemap;
-    var tr = new Transition(this.game.images.sprites_floor, ticks,
-			    this.tilemap.map2coord(p), 20, 40,
-			    (function() { tilemap.set(p.x, p.y, Tile.Empty); }));
-    this.addActor(tr);
+    var p = crack.spread();
+    if (tilemap.get(p.x, p.y) == Tile.Floor) {
+      var tr = new Transition(this.game.images.sprites_floor, ticks);
+      tr.rect = this.tilemap.map2coord(p);
+      tr.delay = this.game.framerate/4;
+      tr.callback = (function(i) {
+	tr.sprite_index = Math.floor(i/2);
+	if (10 <= i) {
+	  tr.alive = false;
+	}
+	if (i == 4) {
+	  tr.layer = -1;
+	  tilemap.set(p.x, p.y, Tile.Empty);
+	}
+      });
+      this.addActor(tr);
+    }
   }
 }
 
