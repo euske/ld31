@@ -15,17 +15,17 @@ function Game(framerate, canvas, images, audios, labels)
   this.key_right = false;
   this.key_up = false;
   this.key_down = false;
-  this.state = -1;		// uninitialized.
+  this.state = 0;		// uninitialized.
 }
 
 Game.prototype.keydown = function (ev)
 {
   switch (this.state) {
   case 1:
-    this.state = 2;
+    this.spawnPlayer();
     break;
   case 3:
-    this.spawnPlayer();
+    this.resetPlayer();
     break;
   case 2:
     switch (ev.keyCode) {
@@ -109,7 +109,6 @@ Game.prototype.init = function ()
   this.player = new Player(this, this.scene, this.ticks, tilesize);
   this.overlays = [];
   this.play_music(this.audios.intro);
-  this.state = 0;		// unspawned
   this.focus();
   var title = new Overlay(this.images.title, this.ticks, this.framerate/3);
   var cx = (this.canvas.width-title.rect.width)/2;
@@ -118,18 +117,25 @@ Game.prototype.init = function ()
   title.p1 = new Point(cx, cy*1);
   title.p2 = new Point(cx, cy*0);
   this.overlays.push(title);
-  this.spawnPlayer();
+  this.resetPlayer();
+}
+
+Game.prototype.resetPlayer = function ()
+{
+  this.player.rect.x = Math.floor(this.scene.mapwidth-this.player.rect.width)/2;
+  this.player.rect.y = Math.floor(this.scene.mapheight-this.player.rect.height)/2;
+  this.scene.startCollapsing(this.ticks);
+  this.scene.startForming(this.ticks, this.player.rect, 3);
+  this.state = 1;		// unspawned
 }
 
 Game.prototype.spawnPlayer = function ()
 {
-  this.player.rect.x = Math.floor(this.scene.mapwidth-this.player.rect.width)/2;
-  this.player.rect.y = Math.floor(this.scene.mapheight-this.player.rect.height)/2;
   this.scene.addActor(this.player);
-  this.scene.startForming(this.ticks, this.player.rect, 3);
+  this.scene.startForming(this.ticks, this.player.rect, 10);
   this.health = 10;
   this.updateHealth(0);
-  this.state = 1;		// unstarted
+  this.state = 2;		// unstarted
 }
 
 Game.prototype.unspawnPlayer = function ()
@@ -142,7 +148,6 @@ Game.prototype.unspawnPlayer = function ()
   gameover.p2 = new Point(cx*0, cy);
   this.overlays.push(gameover);
   this.scene.removeActor(this.player);
-  this.scene.startCollapsing(this.ticks);
   this.state = 3;
 }
 
@@ -176,7 +181,6 @@ Game.prototype.play_music = function (music)
 Game.prototype.idle = function ()
 {
   switch (this.state) {
-  case 0:
   case 1:
   case 3:
     // move everything in the scene (including the player).
