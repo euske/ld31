@@ -105,20 +105,6 @@ Scene.prototype.setCenter = function (rect)
   this.window.y = clamp(0, this.window.y, this.mapheight-this.window.height);
 }
 
-Scene.prototype.addActor = function (actor)
-{
-  this.actors.push(actor);
-  this.actors.sort(function (a,b) { return (b.layer-a.layer); });
-}
-
-Scene.prototype.collide = function (rect, vx, vy)
-{
-  var f = function (c) {
-    return (c < 0 || c == Tile.WallTop || c == Tile.WallBottom);
-  }
-  return this.tilemap.collide(rect, new Point(vx, vy), f);
-}
-
 Scene.prototype.checkAny = function (rect, c)
 {
   var tilemap = this.tilemap;
@@ -133,6 +119,32 @@ Scene.prototype.checkAll = function (rect, c)
   var r = tilemap.coord2map(rect);
   var f = function (x,y) { return (tilemap.get(x,y) != c); };
   return !tilemap.apply(r, f);
+}
+
+Scene.prototype.collideTiles = function (rect, vx, vy)
+{
+  var f = function (c) {
+    return (c < 0 || c == Tile.WallTop || c == Tile.WallBottom);
+  }
+  return this.tilemap.collide(rect, new Point(vx, vy), f);
+}
+
+Scene.prototype.addActor = function (actor)
+{
+  this.actors.push(actor);
+  this.actors.sort(function (a,b) { return (b.layer-a.layer); });
+}
+
+Scene.prototype.collideActors = function (actor0)
+{
+  var a = []
+  for (var i = 0; i < this.actors.length; i++) {
+    var actor1 = this.actors[i];
+    if (actor1 !== actor0 && actor1.rect.overlap(actor0.rect)) {
+      a.push(actor1);
+    }
+  }
+  return a;
 }
 
 Scene.prototype.pick = function (rect)
@@ -155,13 +167,18 @@ Scene.prototype.transform = function (ticks)
     var crack = this.cracks[rnd(this.cracks.length)];
     var tilemap = this.tilemap;
     var p = crack.spread();
-    if (p != null && tilemap.get(p.x, p.y) == Tile.Floor) {
+    if (p != null) {
       switch (rnd(2)) {
       case 0:
-	this.startCollapsingFloor(ticks, p);
+	if (tilemap.get(p.x, p.y) == Tile.Floor) {
+	  //this.startCollapsingFloor(ticks, p);
+	}
 	break;
       case 1:
-	this.startFormingWall(ticks, p);
+	if (tilemap.get(p.x, p.y-1) == Tile.Floor &&
+	    tilemap.get(p.x, p.y) == Tile.Floor) {
+	  this.startFormingWall(ticks, p);
+	}
 	break;
       }
     }
@@ -196,8 +213,13 @@ Scene.prototype.startCollapsing = function (ticks)
     for (var x = 0; x < tilemap.width; x++) {
       var p = new Point(x, y);
       var c = tilemap.get(p.x, p.y);
-      if (c == Tile.Floor) {
+      switch (c) {
+      case Tile.Floor:
 	this.startCollapsingFloor(ticks, p);
+	break;
+      case Tile.WallBottom:
+	this.startCollapsingWall(ticks, p);
+	break;
       }
     }
   }
@@ -228,7 +250,7 @@ Scene.prototype.startFormingWall = function (ticks, p)
   tr.rect = tilemap.map2coord(p);
   tr.rect.y += tr.rect.height-tr.sprites.height;
   tr.layer = -1;
-  tr.delay = rnd(1, this.game.framerate/4);
+  tr.delay = this.game.framerate/4;
   tr.callback = (function(i) {
     tr.sprite_index = Sprite.WallFormingStart+i;
     if (Sprite.WallFormingEnd < tr.sprite_index) {
@@ -260,6 +282,25 @@ Scene.prototype.startCollapsingFloor = function (ticks, p)
   this.addActor(tr);
 }
 
+Scene.prototype.startCollapsingWall = function (ticks, p)
+{
+  var tilemap = this.tilemap;
+  var tr = new Transition(this.game.images.sprites_wall, ticks);
+  tr.rect = tilemap.map2coord(p);
+  tr.delay = this.game.framerate/4;
+  tr.callback = (function(i) {
+    tr.sprite_index = Sprite.WallCollapsingStart+i;
+    if (tr.sprite_index == Sprite.WallCollapsingStart) {
+      tilemap.set(p.x, p.y-1, Tile.Empty);
+      tilemap.set(p.x, p.y, Tile.Empty);
+    } else if (Sprite.WallCollapsingEnd < tr.sprite_index) {
+      tr.alive = false;
+    }
+  });
+  tr.callback(0);
+  this.addActor(tr);
+}
+
 Scene.prototype.repaint = function (ctx)
 {
   var ts = this.tilesize;
@@ -271,17 +312,27 @@ Scene.prototype.repaint = function (ctx)
     var c = tilemap.get(x, y);
     switch (c) {
     case Tile.Floor:
+    case Tile.WallBottom:
+    case Tile.WallTop:
       return Tile.getFloor();
     case Tile.Empty:
       return Tile.getSideFloor(
-	(tilemap.get(x-1,y-1) == Tile.Floor),
-	(tilemap.get(x+0,y-1) == Tile.Floor),
-	(tilemap.get(x+1,y-1) == Tile.Floor),
-	(tilemap.get(x-1,y+0) == Tile.Floor),
-	(tilemap.get(x+1,y+0) == Tile.Floor),
-	(tilemap.get(x-1,y+1) == Tile.Floor),
-	(tilemap.get(x+0,y+1) == Tile.Floor),
-	(tilemap.get(x+1,y+1) == Tile.Floor)
+	(tilemap.get(x-1,y-1) == Tile.WallBottom ||
+	 tilemap.get(x-1,y-1) == Tile.Floor),
+	(tilemap.get(x+0,y-1) == Tile.WallBottom ||
+	 tilemap.get(x+0,y-1) == Tile.Floor),
+	(tilemap.get(x+1,y-1) == Tile.WallBottom ||
+	 tilemap.get(x+1,y-1) == Tile.Floor),
+	(tilemap.get(x-1,y+0) == Tile.WallBottom ||
+	 tilemap.get(x-1,y+0) == Tile.Floor),
+	(tilemap.get(x+1,y+0) == Tile.WallBottom ||
+	 tilemap.get(x+1,y+0) == Tile.Floor),
+	(tilemap.get(x-1,y+1) == Tile.WallBottom ||
+	 tilemap.get(x-1,y+1) == Tile.Floor),
+	(tilemap.get(x+0,y+1) == Tile.WallBottom ||
+	 tilemap.get(x+0,y+1) == Tile.Floor),
+	(tilemap.get(x+1,y+1) == Tile.WallBottom ||
+	 tilemap.get(x+1,y+1) == Tile.Floor)
       );
     default:
       return -1;
@@ -301,7 +352,9 @@ Scene.prototype.repaint = function (ctx)
 	(tilemap.get(x+0,y+1) == Tile.WallBottom),
 	(tilemap.get(x+1,y+1) == Tile.WallBottom)
       );
+    case Tile.Empty:
     case Tile.Floor:
+    case Tile.WallTop:
       return Tile.getSideWall(
 	(tilemap.get(x-1,y-1) == Tile.WallBottom),
 	(tilemap.get(x+0,y-1) == Tile.WallBottom),

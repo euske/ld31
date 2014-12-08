@@ -165,7 +165,7 @@ Tile.getWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
   }
 }
 
-Tile.getSideWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
+Tile.getSideWall = function (ul,uu,ur,ll,rr)
 {
   if (!uu && ur && !ll && rr) {
     return 21;

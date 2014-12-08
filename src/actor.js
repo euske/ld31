@@ -96,11 +96,13 @@ Player.prototype.idle = function (ticks)
       vy += slipping;
     }
   }
-  
+
+  var hitbox = new Rectangle(this.rect.x, this.rect.y+this.rect.height/2,
+			     this.rect.width, this.rect.height/2);
   var speed = 8;
-  var d = this.scene.collide(this.rect, speed*vx, speed*vy);
-  d.x = this.scene.collide(this.rect, speed*vx, d.y).x;
-  d.y = this.scene.collide(this.rect, d.x, speed*vy).y;
+  var d = this.scene.collideTiles(hitbox, speed*vx, speed*vy);
+  d.x = this.scene.collideTiles(hitbox, speed*vx, d.y).x;
+  d.y = this.scene.collideTiles(hitbox, d.x, speed*vy).y;
   this.rect.x += d.x;
   this.rect.y += d.y;
   if (0 <= this.jumping) {
@@ -109,7 +111,7 @@ Player.prototype.idle = function (ticks)
       this.jumping = -1;
     }
   }
-  if (this.scene.pick(this.rect)) {
+  if (this.scene.pick(hitbox)) {
     this.game.audios.pick.play();
     this.game.updateScore(+1);
   }
