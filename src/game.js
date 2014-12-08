@@ -95,8 +95,8 @@ Game.prototype.init = function ()
   var height = this.canvas.height/tilesize;
   this.ticks = 0;
   this.scene = new Scene(this, tilesize, width, height);
-  // Player is an actor, but it's treated specially.
   this.player = new Player(this, this.scene, this.ticks, tilesize);
+  this.scene.addActor(this.player);
   this.overlays = [];
   this.play_music(this.audios.intro);
   this.respawnPlayer();
@@ -152,8 +152,6 @@ Game.prototype.idle = function ()
   if (this.player.ready) {
     // change the level a bit.
     this.scene.transform(this.ticks);
-    // move the player only when the scene is ready.
-    this.player.idle(this.ticks);
     // player dead?
     if (this.player.isDead()) {
       this.audios.hurt.play();
@@ -192,7 +190,7 @@ Game.prototype.repaint = function (ctx)
   ctx.save();
   // re-adjust the view.
   this.scene.setCenter(this.player.rect.inset(-600, -600));
-  this.scene.repaint(ctx, this.player);
+  this.scene.repaint(ctx);
   for (var i = 0; i < this.overlays.length; i++) {
     this.overlays[i].repaint(ctx);
   }

@@ -68,8 +68,7 @@ function Scene(game, tilesize, width, height)
   }
   this.game = game;
   this.tilesize = tilesize;
-  this.tilemap = new TileMap(tilesize, game.images.tiles_floor, map);
-  this.wallmap = new TileMap(tilesize, game.images.tiles_wall, map);
+  this.tilemap = new TileMap(tilesize, map);
   this.window = new Rectangle(0, 0, width*tilesize, height*tilesize);
   this.mapwidth = this.tilemap.width * tilesize;
   this.mapheight = this.tilemap.height * tilesize;
@@ -90,28 +89,6 @@ Scene.prototype.idle = function (ticks)
   removeArray(this.actors, removed);
 }
 
-Scene.prototype.repaint = function (ctx, player)
-{
-  var ts = this.tilesize;
-  var x0 = Math.floor(this.window.x/ts)*ts;
-  var y0 = Math.floor(this.window.y/ts)*ts;
-  for (var i = 0; i < this.actors.length; i++) {
-    var actor = this.actors[i];
-    if (actor.layer < 0) {
-      actor.repaint(ctx, actor.rect.x-this.window.x, actor.rect.y-this.window.y);
-    }
-  }
-  ctx.drawImage(this.tilemap.image, x0-this.window.x, y0-this.window.y);
-  for (var i = 0; i < this.actors.length; i++) {
-    var actor = this.actors[i];
-    if (0 <= actor.layer) {
-      actor.repaint(ctx, actor.rect.x-this.window.x, actor.rect.y-this.window.y);
-    }
-  }
-  player.repaint(ctx);
-  ctx.drawImage(this.wallmap.image, x0-this.window.x, y0-this.window.y);
-}
-
 Scene.prototype.setCenter = function (rect)
 {
   if (rect.x < this.window.x) {
@@ -126,63 +103,6 @@ Scene.prototype.setCenter = function (rect)
   }
   this.window.x = clamp(0, this.window.x, this.mapwidth-this.window.width);
   this.window.y = clamp(0, this.window.y, this.mapheight-this.window.height);
-
-  var r = this.tilemap.coord2map(this.window);
-  var tilemap = this.tilemap;
-  var f = function (x, y) {
-    var c = tilemap.get(x, y);
-    switch (c) {
-    case Tile.Floor:
-      return Tile.getFloor();
-    case Tile.Empty:
-      return Tile.getSideFloor(
-	(tilemap.get(x-1,y-1) == Tile.Floor),
-	(tilemap.get(x+0,y-1) == Tile.Floor),
-	(tilemap.get(x+1,y-1) == Tile.Floor),
-	(tilemap.get(x-1,y+0) == Tile.Floor),
-	(tilemap.get(x+1,y+0) == Tile.Floor),
-	(tilemap.get(x-1,y+1) == Tile.Floor),
-	(tilemap.get(x+0,y+1) == Tile.Floor),
-	(tilemap.get(x+1,y+1) == Tile.Floor)
-      );
-    default:
-      return -1;
-    }
-  };
-  this.tilemap.update(r, f);
-  
-  var wallmap = this.wallmap;
-  var g = function (x, y) {
-    var c = wallmap.get(x, y);
-    switch (c) {
-    case Tile.WallBottom:
-      return Tile.getWall(
-	(wallmap.get(x-1,y-1) == Tile.WallBottom),
-	(wallmap.get(x+0,y-1) == Tile.WallBottom),
-	(wallmap.get(x+1,y-1) == Tile.WallBottom),
-	(wallmap.get(x-1,y+0) == Tile.WallBottom),
-	(wallmap.get(x+1,y+0) == Tile.WallBottom),
-	(wallmap.get(x-1,y+1) == Tile.WallBottom),
-	(wallmap.get(x+0,y+1) == Tile.WallBottom),
-	(wallmap.get(x+1,y+1) == Tile.WallBottom)
-      );
-    case Tile.Floor:
-      return Tile.getSideWall(
-	(wallmap.get(x-1,y-1) == Tile.WallBottom),
-	(wallmap.get(x+0,y-1) == Tile.WallBottom),
-	(wallmap.get(x+1,y-1) == Tile.WallBottom),
-	(wallmap.get(x-1,y+0) == Tile.WallBottom),
-	(wallmap.get(x+1,y+0) == Tile.WallBottom),
-	(wallmap.get(x-1,y+1) == Tile.WallBottom),
-	(wallmap.get(x+0,y+1) == Tile.WallBottom),
-	(wallmap.get(x+1,y+1) == Tile.WallBottom)
-      );
-    default:
-      return -1;
-    }
-    return c;
-  };
-  this.wallmap.update(r, g);
 }
 
 Scene.prototype.addActor = function (actor)
@@ -218,14 +138,11 @@ Scene.prototype.checkAll = function (rect, c)
 Scene.prototype.pick = function (rect)
 {
   var tilemap = this.tilemap;
-  var wallmap = this.wallmap;
   var r = tilemap.coord2map(rect);
   var f = function (x,y) { return (tilemap.get(x,y) == Tile.Cake); };
   var g = function (x,y) { if (tilemap.get(x,y) == Tile.Cake) { tilemap.set(x,y,0); } };
   if (tilemap.apply(r, f)) {
     tilemap.apply(r, g);
-    tilemap.invalidate();
-    wallmap.invalidate();
     return true;
   }
   return false;
@@ -289,7 +206,6 @@ Scene.prototype.startCollapsing = function (ticks)
 Scene.prototype.startFormingFloor = function (ticks, p)
 {
   var tilemap = this.tilemap;
-  var wallmap = this.wallmap;
   var tr = new Transition(this.game.images.sprites_floor, ticks);
   tr.rect = tilemap.map2coord(p);
   tr.layer = -1;
@@ -299,8 +215,6 @@ Scene.prototype.startFormingFloor = function (ticks, p)
     if (Sprite.FloorFormingEnd < tr.sprite_index) {
       tr.alive = false;
       tilemap.set(p.x, p.y, Tile.Floor);
-      tilemap.invalidate();
-      wallmap.invalidate();
     }
   });
   tr.callback(0);
@@ -310,7 +224,6 @@ Scene.prototype.startFormingFloor = function (ticks, p)
 Scene.prototype.startFormingWall = function (ticks, p)
 {
   var tilemap = this.tilemap;
-  var wallmap = this.wallmap;
   var tr = new Transition(this.game.images.sprites_wall, ticks);
   tr.rect = tilemap.map2coord(p);
   tr.rect.y += tr.rect.height-tr.sprites.height;
@@ -322,8 +235,6 @@ Scene.prototype.startFormingWall = function (ticks, p)
       tr.alive = false;
       tilemap.set(p.x, p.y-1, Tile.WallTop);
       tilemap.set(p.x, p.y, Tile.WallBottom);
-      tilemap.invalidate();
-      wallmap.invalidate();
     }
   });
   tr.callback(0);
@@ -333,7 +244,6 @@ Scene.prototype.startFormingWall = function (ticks, p)
 Scene.prototype.startCollapsingFloor = function (ticks, p)
 {
   var tilemap = this.tilemap;
-  var wallmap = this.wallmap;
   var tr = new Transition(this.game.images.sprites_floor, ticks);
   tr.rect = tilemap.map2coord(p);
   tr.delay = this.game.framerate/4;
@@ -342,12 +252,91 @@ Scene.prototype.startCollapsingFloor = function (ticks, p)
     if (tr.sprite_index == Sprite.FloorCollapsingBreak) {
       tr.layer = -1;
       tilemap.set(p.x, p.y, Tile.Empty);
-      tilemap.invalidate();
-      wallmap.invalidate();
     } else if (Sprite.FloorCollapsingEnd < tr.sprite_index) {
       tr.alive = false;
     }
   });
   tr.callback(0);
   this.addActor(tr);
+}
+
+Scene.prototype.repaint = function (ctx)
+{
+  var ts = this.tilesize;
+  var tilemap = this.tilemap;
+  var r = tilemap.coord2map(this.window);
+  var x0 = r.x*ts;
+  var y0 = r.y*ts;
+  var getFloor = function (x, y) {
+    var c = tilemap.get(x, y);
+    switch (c) {
+    case Tile.Floor:
+      return Tile.getFloor();
+    case Tile.Empty:
+      return Tile.getSideFloor(
+	(tilemap.get(x-1,y-1) == Tile.Floor),
+	(tilemap.get(x+0,y-1) == Tile.Floor),
+	(tilemap.get(x+1,y-1) == Tile.Floor),
+	(tilemap.get(x-1,y+0) == Tile.Floor),
+	(tilemap.get(x+1,y+0) == Tile.Floor),
+	(tilemap.get(x-1,y+1) == Tile.Floor),
+	(tilemap.get(x+0,y+1) == Tile.Floor),
+	(tilemap.get(x+1,y+1) == Tile.Floor)
+      );
+    default:
+      return -1;
+    }
+  };
+  var getWall = function (x, y) {
+    var c = tilemap.get(x, y);
+    switch (c) {
+    case Tile.WallBottom:
+      return Tile.getWall(
+	(tilemap.get(x-1,y-1) == Tile.WallBottom),
+	(tilemap.get(x+0,y-1) == Tile.WallBottom),
+	(tilemap.get(x+1,y-1) == Tile.WallBottom),
+	(tilemap.get(x-1,y+0) == Tile.WallBottom),
+	(tilemap.get(x+1,y+0) == Tile.WallBottom),
+	(tilemap.get(x-1,y+1) == Tile.WallBottom),
+	(tilemap.get(x+0,y+1) == Tile.WallBottom),
+	(tilemap.get(x+1,y+1) == Tile.WallBottom)
+      );
+    case Tile.Floor:
+      return Tile.getSideWall(
+	(tilemap.get(x-1,y-1) == Tile.WallBottom),
+	(tilemap.get(x+0,y-1) == Tile.WallBottom),
+	(tilemap.get(x+1,y-1) == Tile.WallBottom),
+	(tilemap.get(x-1,y+0) == Tile.WallBottom),
+	(tilemap.get(x+1,y+0) == Tile.WallBottom),
+	(tilemap.get(x-1,y+1) == Tile.WallBottom),
+	(tilemap.get(x+0,y+1) == Tile.WallBottom),
+	(tilemap.get(x+1,y+1) == Tile.WallBottom)
+      );
+    default:
+      return -1;
+    }
+  };
+
+  ctx.clearRect(0, 0, this.window.width, this.window.height);
+  for (var y = 0; y < tilemap.height; y++) {
+    var line = new Rectangle(0, y*ts, this.window.width, ts);
+    for (var i = 0; i < this.actors.length; i++) {
+      var actor = this.actors[i];
+      if (actor.layer < 0 && actor.rect.overlap(line)) {
+	actor.repaint(ctx, actor.rect.x-this.window.x, actor.rect.y-this.window.y);
+      }
+    }
+    tilemap.render(ctx, this.game.images.tiles_floor, getFloor,
+		   x0-this.window.x, y0-this.window.y+y*ts,
+		   r.x, r.y+y, r.width+1, 1);
+    tilemap.render(ctx, this.game.images.tiles_wall, getWall,
+		   x0-this.window.x, y0-this.window.y+y*ts,
+		   r.x, r.y+y, r.width+1, 1);
+    for (var i = 0; i < this.actors.length; i++) {
+      var actor = this.actors[i];
+      if (0 <= actor.layer && actor.rect.overlap(line)) {
+	actor.repaint(ctx, actor.rect.x-this.window.x, actor.rect.y-this.window.y);
+      }
+    }
+  }
 }

@@ -113,11 +113,9 @@ Tile.getSideFloor = function (ul,uu,ur, ll, rr, dl,dd,dr)
 // Wall Tiles are 2.5x + 3px tall and overlap eachother
 // 	Walls at top of screen are rendered below walls closer to bottom
 //	Player at y=0 collides with tiles at y=0 and y=1 (2 tile collision)
-//      
+//
 Tile.getWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
 {
-  //	1 to 20 are solid and have collisions
-  //	everything else is an edge (0=blank/null)
   if (uu && !dl && !dr) {
     return 1;
   } else if (uu && dl && !dr) {
@@ -169,8 +167,6 @@ Tile.getWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
 
 Tile.getSideWall = function (ul,uu,ur,ll,rr,dl,dd,dr)
 {
-  //	1 to 20 are solid and have collisions
-  //	everything else is an edge (0=blank/null)
   if (!uu && ur && !ll && rr) {
     return 21;
   } else if (ul && !uu && ll && !rr) {

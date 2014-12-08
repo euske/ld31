@@ -2,17 +2,12 @@
 // TileMap is a generic framework that handles a scrollable tile map.
 // A game can have multiple TileMaps.
 
-function TileMap(tilesize, tiles, map)
+function TileMap(tilesize, map)
 {
   this.tilesize = tilesize;
-  this.tiles = tiles;
   this.map = map;
   this.width = map[0].length;
   this.height = map.length;
-  this.image = document.createElement('canvas');
-  this.image.width = tilesize*(this.width+1);
-  this.image.height = tilesize*(this.height+1);
-  this.window = new Rectangle(-1, -1, 0, 0);
 }
 
 TileMap.prototype.get = function (x, y)
@@ -31,36 +26,19 @@ TileMap.prototype.set = function (x, y, v)
   }
 }
 
-TileMap.prototype.invalidate = function ()
-{
-  this.window.x = -1;
-  this.window.y = -1;
-}
-
-TileMap.prototype.update = function (rect, f)
-{
-  f = (typeof(f) !== 'undefined')? f : this.get;
-  if (!this.window.equals(rect)) {
-    this.window = rect;
-    this.render(rect.x, rect.y, rect.width+1, rect.height+1, f);
-  }
-}
-
-TileMap.prototype.render = function (x, y, w, h, f)
+TileMap.prototype.render = function (ctx, tiles, f, x0, y0, x, y, w, h)
 {
   var ts = this.tilesize;
-  var ctx = this.image.getContext('2d');
-  ctx.clearRect(0, 0, ts*w, ts*h);
   for (var dy = 0; dy < h; dy++) {
     for (var dx = 0; dx < w; dx++) {
       var c = f(x+dx, y+dy);
       if (0 <= c) {
 	// Align the bottom left corner.
-	ctx.drawImage(this.tiles,
+	ctx.drawImage(tiles,
 		      ts*c, 0,
-		      ts, this.tiles.height,
-		      ts*dx, ts*dy+ts-this.tiles.height,
-		      ts, this.tiles.height);
+		      ts, tiles.height,
+		      x0+ts*dx, y0+ts*dy+ts-tiles.height,
+		      ts, tiles.height);
       }
     }
   }

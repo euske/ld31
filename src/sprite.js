@@ -2,8 +2,10 @@
 // "Sprite" is a static image shown in each animation frame for Actors.
 
 Sprite = {
-  // sprites.png
+  // player.png
   Player: 0,
+  
+  // shadow.png
   PlayerShadow: 1,
   
   // spritesheet_floor.png
@@ -13,13 +15,13 @@ Sprite = {
   FloorCollapsingBreak: 7,
   FloorCollapsingEnd: 10,
   
-  //spritesheet_walls.png
+  // spritesheet_walls.png
   WallFormingStart: 0,
   WallFormingEnd: 4,
   WallCollapsingStart: 4,
   WallCollapsingEnd: 8,
   
-  //tilemap_lava.png
+  // tilemap_lava.png
   LavaFormingStart: 0,
   LavaFormingEnd: 3,
   LavaIdleStart: 4,
@@ -27,13 +29,13 @@ Sprite = {
   LavaBreakingStart: 12,
   LavaBreakingEnd: 15,
   
-  //spritesheet_lava.png
+  // spritesheet_lava.png
   LavaDropFallingStart: 0,
   LavaDropFallingEnd: 3,
   LavaDropLandingStart: 4,
   LavaDropLandingEnd: 6,
   
-  //tilemap_ice.png
+  // tilemap_ice.png
   IceFormingStart: 0,
   IceFormingEnd: 2,
   IceIdleStart: 3,
@@ -45,9 +47,15 @@ Sprite = {
   IceBreakingStart: 21,
   IceBreakingEnd: 23,
   
-  //spritesheet_ice.png
+  // spritesheet_ice.png
   IceDropFallingStart: 0,
   IceDropFallingEnd: 3,
   IceDropLandingStart: 4,
   IceDropLandingEnd: 5,
+  
+  // tilemap_spikes.png
+  SpikeFormingStart: 0,
+  SpikeFormingEnd: 2,
+  SpikeBreakingStart: 2,
+  SpikeBreakingEnd: 4,
 };
