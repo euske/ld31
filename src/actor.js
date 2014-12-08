@@ -52,8 +52,10 @@ Transition.prototype.repaint = function (ctx, x, y)
 {
   // draw the thing.
   ctx.drawImage(this.sprites,
-		this.sprite_index*this.rect.width, 0, this.rect.width, this.rect.height,
-		x, y, this.rect.width, this.rect.height);
+		this.sprite_index*this.rect.width, 0,
+		this.rect.width, this.sprites.height,
+		x, y,
+		this.rect.width, this.sprites.height);
 }
 
 // Player is an Actor.

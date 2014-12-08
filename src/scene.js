@@ -220,14 +220,14 @@ Scene.prototype.change = function (ticks)
       var tr = new Transition(this.game.images.sprites_floor, ticks);
       tr.rect = this.tilemap.map2coord(p);
       tr.delay = this.game.framerate/4;
+      tr.sprite_index = Sprite.FloorCollapsingStart;
       tr.callback = (function(i) {
-	tr.sprite_index = Math.floor(i/2);
-	if (10 <= i) {
-	  tr.alive = false;
-	}
-	if (i == 4) {
+	tr.sprite_index = Sprite.FloorCollapsingStart+i;
+	if (tr.sprite_index == Sprite.FloorCollapsingBreak) {
 	  tr.layer = -1;
 	  tilemap.set(p.x, p.y, Tile.Empty);
+	} else if (Sprite.FloorCollapsingEnd < tr.sprite_index) {
+	  tr.alive = false;
 	}
       });
       this.addActor(tr);
