@@ -73,6 +73,14 @@ function Scene(game, tilesize, width, height)
   this.mapwidth = this.tilemap.width * tilesize;
   this.mapheight = this.tilemap.height * tilesize;
   this.actors = [];
+  this.transitions = new Array(height);
+  for (var i = 0; i < this.transitions.length; i++) {
+    var row = new Array(width);
+    for (var j = 0; j < row.length; j++) {
+      row[j] = null;
+    }
+    this.transitions[i] = row;
+  }
 }
 
 Scene.prototype.idle = function (ticks)
@@ -87,6 +95,18 @@ Scene.prototype.idle = function (ticks)
     }
   }
   removeArray(this.actors, removed);
+  for (var y = 0; y < this.transitions.length; y++) {
+    var row = this.transitions[y];
+    for (var x = 0; x < row.length; x++) {
+      var transition = row[x];
+      if (transition != null) {
+	transition.idle(ticks);
+	if (!transition.alive) {
+	  row[x] = null;
+	}
+      }
+    }
+  }
 }
 
 Scene.prototype.setCenter = function (rect)
@@ -135,6 +155,11 @@ Scene.prototype.addActor = function (actor)
   this.actors.sort(function (a,b) { return (b.layer-a.layer); });
 }
 
+Scene.prototype.addTransition = function (x, y, transition)
+{
+  this.transitions[y][x] = transition;
+}
+
 Scene.prototype.collideActors = function (actor0)
 {
   var a = []
@@ -168,13 +193,14 @@ Scene.prototype.transform = function (ticks)
     var tilemap = this.tilemap;
     var p = crack.spread();
     if (p != null) {
-      switch (rnd(2)) {
+      switch (rnd(10)) {
       case 0:
+      case 1:
 	if (tilemap.get(p.x, p.y) == Tile.Floor) {
-	  //this.startCollapsingFloor(ticks, p);
+	  this.startCollapsingFloor(ticks, p);
 	}
 	break;
-      case 1:
+      case 2:
 	if (tilemap.get(p.x, p.y-1) == Tile.Floor &&
 	    tilemap.get(p.x, p.y) == Tile.Floor) {
 	  this.startFormingWall(ticks, p);
@@ -240,7 +266,7 @@ Scene.prototype.startFormingFloor = function (ticks, p)
     }
   });
   tr.callback(0);
-  this.addActor(tr);
+  this.addTransition(p.x, p.y, tr);
 }
 
 Scene.prototype.startFormingWall = function (ticks, p)
@@ -260,7 +286,7 @@ Scene.prototype.startFormingWall = function (ticks, p)
     }
   });
   tr.callback(0);
-  this.addActor(tr);
+  this.addTransition(p.x, p.y, tr);
 }
 
 Scene.prototype.startCollapsingFloor = function (ticks, p)
@@ -279,7 +305,7 @@ Scene.prototype.startCollapsingFloor = function (ticks, p)
     }
   });
   tr.callback(0);
-  this.addActor(tr);
+  this.addTransition(p.x, p.y, tr);
 }
 
 Scene.prototype.startCollapsingWall = function (ticks, p)
@@ -298,7 +324,7 @@ Scene.prototype.startCollapsingWall = function (ticks, p)
     }
   });
   tr.callback(0);
-  this.addActor(tr);
+  this.addTransition(p.x, p.y, tr);
 }
 
 Scene.prototype.repaint = function (ctx)
@@ -373,10 +399,13 @@ Scene.prototype.repaint = function (ctx)
   ctx.clearRect(0, 0, this.window.width, this.window.height);
   for (var y = 0; y < tilemap.height; y++) {
     var line = new Rectangle(0, y*ts, this.window.width, ts);
-    for (var i = 0; i < this.actors.length; i++) {
-      var actor = this.actors[i];
-      if (actor.layer < 0 && actor.rect.overlap(line)) {
-	actor.repaint(ctx, actor.rect.x-this.window.x, actor.rect.y-this.window.y);
+    var row = this.transitions[y];
+    for (var x = 0; x < row.length; x++) {
+      var transition = row[x];
+      if (transition != null && transition.layer < 0) {
+	transition.repaint(ctx,
+			   transition.rect.x-this.window.x,
+			   transition.rect.y-this.window.y);
       }
     }
     tilemap.render(ctx, this.game.images.tiles_floor, getFloor,
@@ -385,10 +414,20 @@ Scene.prototype.repaint = function (ctx)
     tilemap.render(ctx, this.game.images.tiles_wall, getWall,
 		   x0-this.window.x, y0-this.window.y+y*ts,
 		   r.x, r.y+y, r.width+1, 1);
+    for (var x = 0; x < row.length; x++) {
+      var transition = row[x];
+      if (transition != null && 0 <= transition.layer) {
+	transition.repaint(ctx,
+			   transition.rect.x-this.window.x,
+			   transition.rect.y-this.window.y);
+      }
+    }
     for (var i = 0; i < this.actors.length; i++) {
       var actor = this.actors[i];
-      if (0 <= actor.layer && actor.rect.overlap(line)) {
-	actor.repaint(ctx, actor.rect.x-this.window.x, actor.rect.y-this.window.y);
+      if (actor.rect.overlap(line)) {
+	actor.repaint(ctx,
+		      actor.rect.x-this.window.x,
+		      actor.rect.y-this.window.y);
       }
     }
   }
