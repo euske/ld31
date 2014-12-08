@@ -1,64 +1,58 @@
 // scene.js
 // Scene object takes care of every in-game object and the scrollable map.
 
-function Crack(x, y)
+function Crack(cx, cy, w, h)
 {
-  this.origin = new Point(x,y);
+  this.x0 = cx-w;
+  this.y0 = cy-h;
+  this.x1 = cx+w+1;
+  this.y1 = cy+h+1;
   this.pts = [];
+}
+
+Crack.prototype.find = function (x, y)
+{
+  var found = -1;
+  for (var i = 0; i < this.pts.length; i++) {
+    p = this.pts[i];
+    if (p.x == x && p.x == y) {
+      found = i;
+      break;
+    }
+  }
+  return found;
 }
 
 Crack.prototype.spread = function ()
 {
-  var q;
+  var q = null;
   if (this.pts.length == 0) {
-    q = this.origin;
+    q = new Point(rnd(this.x0, this.x1),
+		  rnd(this.y0, this.y1));
   } else {
-    while (1) {
+    var max_tries = 10;
+    for (var i = 0; i < max_tries; i++) {
       var p = this.pts[rnd(this.pts.length)];
-      q = p.copy();
+      var x = p.x;
+      var y = p.y;
       switch (rnd(4)) {
-      case 0: q.x--; break;
-      case 1: q.x++; break;
-      case 2: q.y--; break; 
-      case 3: q.y++; break;
+      case 0: x--; break;
+      case 1: x++; break;
+      case 2: y--; break; 
+      case 3: y++; break;
       }
-      var found = -1;
-      for (var i = 0; i < this.pts.length; i++) {
-	if (q.equals(this.pts[i])) {
-	  found = i;
-	  break;
-	}
+      if (x < this.x0 || y < this.y0 ||
+	  this.x1 <= x || this.y1 <= y) continue;
+      if (this.find(x, y) < 0) {
+	q = new Point(x, y);
+	break;
       }
-      if (found < 0) break;
     }
   }
-  this.pts.push(q);
+  if (q) {
+    this.pts.push(q);
+  }
   return q;
-}
-
-Crack.prototype.shrink = function ()
-{
-  if (0 < this.pts.length) {
-    return this.pts.pop();
-  } else {
-    return null;
-  }
-}
-
-function fillArray(a, x0, y0, w, h, c)
-{
-  for (var dy = 0; dy < h; dy++) {
-    var y = y0+dy;
-    if (0 <= y && y < a.length) {
-      var row = a[y];
-      for (var dx = 0; dx < w; dx++) {
-	var x = x0+dx;
-	if (0 <= x && x < row.length) {
-	  row[x] = c;
-	}
-      }
-    }
-  }
 }
 
 function Scene(game, tilesize, width, height)
@@ -72,22 +66,6 @@ function Scene(game, tilesize, width, height)
     }
     map[i] = row;
   }
-  var cx = Math.floor(width/2);
-  var cy = Math.floor(height/2);
-  for (var d = 0; d < 10; d++) {
-    var x = cx + rnd(-(d+1), d+1);
-    var y = cy + rnd(-(d+1), d+1);
-    var w = Math.min(rnd(5, 10), x-1, width-x-1);
-    var h = Math.min(rnd(5, 10), y-1, height-y-1);
-    fillArray(map, x, y, w, h, Tile.Floor);
-  }
-  this.cracks = [];
-  for (var i = 0; i < 10; i++) {
-    var x = rnd(width);
-    var y = rnd(height);
-    this.cracks.push(new Crack(x, y));
-  }
-
   this.game = game;
   this.tilesize = tilesize;
   this.tilemap = new TileMap(tilesize, game.images.tiles, map);
@@ -99,8 +77,6 @@ function Scene(game, tilesize, width, height)
 
 Scene.prototype.idle = function (ticks)
 {
-  // change the level a bit.
-  this.change(ticks);
   // move each actor.
   var removed = []
   for (var i = 0; i < this.actors.length; i++) {
@@ -212,36 +188,84 @@ Scene.prototype.pick = function (rect)
 
 Scene.prototype.change = function (ticks)
 {
+  // Make a gradual change.
   if (0 < this.cracks.length) {
     var crack = this.cracks[rnd(this.cracks.length)];
     var tilemap = this.tilemap;
     var p = crack.spread();
-    if (tilemap.get(p.x, p.y) == Tile.Floor) {
-      var tr = new Transition(this.game.images.sprites_floor, ticks);
-      tr.rect = this.tilemap.map2coord(p);
-      tr.delay = this.game.framerate/4;
-      tr.sprite_index = Sprite.FloorCollapsingStart;
-      tr.callback = (function(i) {
-	tr.sprite_index = Sprite.FloorCollapsingStart+i;
-	if (tr.sprite_index == Sprite.FloorCollapsingBreak) {
-	  tr.layer = -1;
-	  tilemap.set(p.x, p.y, Tile.Empty);
-	} else if (Sprite.FloorCollapsingEnd < tr.sprite_index) {
-	  tr.alive = false;
-	}
-      });
-      this.addActor(tr);
+    if (p != null && tilemap.get(p.x, p.y) == Tile.Floor) {
+      this.startCollapsingFloor(ticks, p);
     }
   }
 }
 
-Scene.prototype.rewind = function ()
+Scene.prototype.startForming = function (ticks, rect, max_radius)
 {
-  if (0 < this.cracks.length) {
-    var crack = this.cracks[rnd(this.cracks.length)];
-    var p = crack.shrink();
-    if (p != null) {
-      this.tilemap.set(p.x, p.y, Tile.Floor);
+  var tilemap = this.tilemap;
+  var max_size = 5;
+  var r = tilemap.coord2map(rect);
+  this.cracks = [];
+  for (var d = 0; d < max_radius; d++) {
+    var cx = r.x + rnd(-(d+1), d+1);
+    var cy = r.y + rnd(-(d+1), d+1);
+    var w = Math.min(rnd(1, max_size), cx, tilemap.width-cx);
+    var h = Math.min(rnd(1, max_size), cy, tilemap.height-cy);
+    for (var dy = -h; dy <= h; dy++) {
+      for (var dx = -w; dx <= w; dx++) {
+	var p = new Point(cx+dx, cy+dy);
+	this.startFormingFloor(ticks, p);
+      }
+    }
+    this.cracks.push(new Crack(cx, cy, w, h));
+  }
+}
+
+Scene.prototype.startCollapsing = function (ticks)
+{
+  var tilemap = this.tilemap;
+  for (var y = 0; y < tilemap.height; y++) {
+    for (var x = 0; x < tilemap.width; x++) {
+      var p = new Point(x, y);
+      if (tilemap.get(p.x, p.y) == Tile.Floor) {
+	this.startCollapsingFloor(ticks, p);
+      }
     }
   }
+}
+
+Scene.prototype.startFormingFloor = function (ticks, p)
+{
+  var tilemap = this.tilemap;
+  var tr = new Transition(this.game.images.sprites_floor, ticks);
+  tr.rect = tilemap.map2coord(p);
+  tr.layer = -1;
+  tr.delay = rnd(1, this.game.framerate/4);
+  tr.callback = (function(i) {
+    tr.sprite_index = Sprite.FloorFormingStart+i;
+    if (Sprite.FloorFormingEnd < tr.sprite_index) {
+      tr.alive = false;
+      tilemap.set(p.x, p.y, Tile.Floor);
+    }
+  });
+  tr.callback(0);
+  this.addActor(tr);
+}
+
+Scene.prototype.startCollapsingFloor = function (ticks, p)
+{
+  var tilemap = this.tilemap;
+  var tr = new Transition(this.game.images.sprites_floor, ticks);
+  tr.rect = tilemap.map2coord(p);
+  tr.delay = this.game.framerate/4;
+  tr.callback = (function(i) {
+    tr.sprite_index = Sprite.FloorCollapsingStart+i;
+    if (tr.sprite_index == Sprite.FloorCollapsingBreak) {
+      tr.layer = -1;
+      tilemap.set(p.x, p.y, Tile.Empty);
+    } else if (Sprite.FloorCollapsingEnd < tr.sprite_index) {
+      tr.alive = false;
+    }
+  });
+  tr.callback(0);
+  this.addActor(tr);
 }

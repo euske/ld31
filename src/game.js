@@ -95,19 +95,27 @@ Game.prototype.init = function ()
   var height = this.canvas.height/tilesize;
   this.ticks = 0;
   this.scene = new Scene(this, tilesize, width, height);
+  // Player is an actor, but it's treated specially.
   this.player = new Player(this, this.scene, this.ticks, tilesize);
-  this.player.rect.x = Math.floor(this.scene.mapwidth-this.player.rect.width)/2;
-  this.player.rect.y = Math.floor(this.scene.mapheight-this.player.rect.height)/2;
-  this.scene.addActor(this.player);
   this.overlays = [];
-  this.health = 10;
-  this.updateHealth(0);
   this.play_music(this.audios.intro);
+  this.respawnPlayer();
   this.focus();
   var title = new Overlay(this.images.title, this.ticks, this.framerate);
   title.rect.x = (this.canvas.width-title.rect.width)/2;
   title.rect.y = (this.canvas.height-title.rect.height)/2;
   this.overlays.push(title);
+}
+
+Game.prototype.respawnPlayer = function ()
+{
+  this.player.rect.x = Math.floor(this.scene.mapwidth-this.player.rect.width)/2;
+  this.player.rect.y = Math.floor(this.scene.mapheight-this.player.rect.height)/2;
+  this.player.ready = false;
+  this.health = 10;
+  this.updateHealth(0);
+  this.scene.startCollapsing(this.ticks);
+  this.scene.startForming(this.ticks, this.player.rect, 10);
 }
 
 Game.prototype.focus = function (ev)
@@ -141,14 +149,19 @@ Game.prototype.idle = function ()
 {
   // move everything in the scene (including the player).
   this.scene.idle(this.ticks);
-  // readjust the view.
-  this.scene.setCenter(this.player.rect.inset(-600, -600));
-  // player dead?
-  if (this.player.isDead()) {
-    this.audios.hurt.play();
-    var n = rnd(10, 100);
-    for (var i = 0; i < n && this.player.isDead(); i++) {
-      this.scene.rewind();
+  if (this.player.ready) {
+    // change the level a bit.
+    this.scene.change(this.ticks);
+    // move the player only when the scene is ready.
+    this.player.idle(this.ticks);
+    // player dead?
+    if (this.player.isDead()) {
+      this.audios.hurt.play();
+      this.respawnPlayer();
+    }
+  } else {
+    if (!this.player.isDead()) {
+      this.player.ready = true;
     }
   }
   // play the next music.
@@ -177,7 +190,10 @@ Game.prototype.repaint = function (ctx)
 {
   ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   ctx.save();
+  // re-adjust the view.
+  this.scene.setCenter(this.player.rect.inset(-600, -600));
   this.scene.repaint(ctx);
+  this.player.repaint(ctx);
   for (var i = 0; i < this.overlays.length; i++) {
     this.overlays[i].repaint(ctx);
   }

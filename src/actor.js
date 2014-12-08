@@ -66,7 +66,7 @@ function Player(game, scene, ticks, spritesize)
   this.ticks = ticks;
   this.spritesize = spritesize;
   this.layer = 0;
-  this.alive = true;
+  this.ready = false;
   this.rect = new Rectangle(0, 0, spritesize, spritesize);
   
   this.vx = this.vy = 0;
@@ -114,8 +114,10 @@ Player.prototype.idle = function (ticks)
   }
 }
 
-Player.prototype.repaint = function (ctx, x, y)
+Player.prototype.repaint = function (ctx)
 {
+  var x = this.rect.x - this.scene.window.x;
+  var y = this.rect.y - this.scene.window.y;
   // draw the shadow.
   ctx.drawImage(this.game.images.sprites,
 		Sprite.PlayerShadow*this.spritesize, 0, this.rect.width, this.rect.height,
