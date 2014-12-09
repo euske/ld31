@@ -34,21 +34,25 @@ function run()
     }
   };
   window.setInterval(idle, 1000/framerate);
-  window.addEventListener('keydown', function (e) { game.keydown(e); });
+  window.addEventListener('keydown', function (e) { game.keydown(e);
+			if (e.keyCode == 32) { e.preventDefault(); }
+			});
   window.addEventListener('keyup', function (e) { game.keyup(e); });
   window.addEventListener('focus', function (e) { game.focus(e); game.repaint(ctx); });
   window.addEventListener('blur', function (e) { game.blur(e); game.repaint(ctx); });
   game.init();
 }
 </script>
-<body style="background:#61E8A4;" onload="run();">
+<body style="background:#61E8A4; margin:0px;" onload="run();">
 <div align=center>
-  <div style="position:relative; width:640px;">
+  <div style="position:relative; width:800px; padding-bottom:800px;">
     <canvas id="canvas" style="position:absolute; top:0; left:0; background:#61E8A4;"
 	    width="800" height="800"></canvas>
-    <div class="label" id="time" style="position:absolute; top:0; left:0px; color:black;"></div>
-    <div class="label" id="health" style="position:absolute; top:0; left:100px; color:black;"></div>
+    <div class="label" id="health" style="position:absolute; top:0; left:0px; color:red; font-size:75%;"></div>
   </div>
+  <div class="label" id="time" style="position:relative; font-family: Quartz MS, Trebuchet MS, Arial, sans-serif; top:0px; left:0px; color:#F0F0F0;"></div>
+  <div class="label" id="health" style="position:relative; top:20px; left:0px; color:red; font-size:60%"></div>
+  <div style="position:relative;"><img src="assets/images/controls.png"></div>
 </div>
 <div style="display:none;">
   <img id="tiles_floor" src="assets/images/tilemap_floor.png">
@@ -60,13 +64,15 @@ function run()
   <img id="tiles_ice" src="assets/images/tilemap_ice.png">
   <img id="sprites_ice" src="assets/images/spritesheet_ice.png">
   <img id="tiles_spikes" src="assets/images/tilemap_spikes.png">
-  <img id="sprites" src="assets/images/sprites.png">
-  <img id="shadow" src="assets/images/shadow.png">
+  <img id="sprites_player" src="assets/images/spritesheet_player.png">
+  <img id="sprites_shadow" src="assets/images/spritesheet_shadow.png">
   <img id="title" src="assets/images/title.png">
   <img id="gameover" src="assets/images/gameover.png">
   <audio id="jump" type="audio/mpeg" src="assets/sounds/jump.mp3" preload="auto"></audio>
-  <audio id="pick" type="audio/mpeg" src="assets/sounds/pick.mp3" preload="auto"></audio>
-  <audio id="hurt" type="audio/mpeg" src="assets/sounds/Death_Water.mp3" preload="auto"></audio>
+  <audio id="hurt" type="audio/mpeg" src="assets/sounds/hurt.mp3" preload="auto"></audio>
+  <audio id="death" type="audio/mpeg" src="assets/sounds/Death_Water.mp3" preload="auto"></audio>
+  <audio id="icedrop" type="audio/mpeg" src="assets/sounds/ice_drop.mp3" preload="auto"></audio>
+  <audio id="lavadrop" type="audio/mpeg" src="assets/sounds/lava_drop.mp3" preload="auto"></audio>
   <audio id="intro" type="audio/mpeg" src="assets/musics/intro_jingle_2.mp3" preload="auto">-1</audio>
   <audio id="music" type="audio/mpeg" src="assets/musics/Guitar1.mp3" preload="auto">-0.2</audio>
 </div>

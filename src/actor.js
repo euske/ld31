@@ -119,8 +119,8 @@ Player.prototype.idle = function (ticks)
 Player.prototype.repaint = function (ctx, x, y)
 {
   // draw the shadow.
-  ctx.drawImage(this.game.images.sprites,
-		Sprite.PlayerShadow*this.spritesize, 0, this.rect.width, this.rect.height,
+  ctx.drawImage(this.game.images.sprites_shadow,
+		Sprite.ShadowIdle*this.spritesize, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
   // draw the player.
   if (0 <= this.jumping) {
@@ -128,8 +128,8 @@ Player.prototype.repaint = function (ctx, x, y)
     var t = (this.jumping/this.maxjump)-0.5;
     y -= (0.25-t*t)*6 * this.rect.height;
   }
-  ctx.drawImage(this.game.images.sprites,
-		Sprite.Player*this.spritesize, 0, this.rect.width, this.rect.height,
+  ctx.drawImage(this.game.images.sprites_player,
+		Sprite.PlayerIdleStart*this.spritesize, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
 }
 

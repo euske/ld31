@@ -110,13 +110,6 @@ Game.prototype.init = function ()
   this.overlays = [];
   this.play_music(this.audios.intro);
   this.focus();
-  var title = new Overlay(this.images.title, this.ticks, this.framerate/3);
-  var cx = (this.canvas.width-title.rect.width)/2;
-  var cy = (this.canvas.height-title.rect.height)/2;
-  title.p0 = new Point(cx, cy*2);
-  title.p1 = new Point(cx, cy*1);
-  title.p2 = new Point(cx, cy*0);
-  this.overlays.push(title);
   this.resetPlayer();
 }
 
@@ -131,9 +124,17 @@ Game.prototype.resetPlayer = function ()
 
 Game.prototype.spawnPlayer = function ()
 {
+  var title = new Overlay(this.images.title, this.ticks, this.framerate/3);
+  var cx = (this.canvas.width/2);
+  var cy = (this.canvas.height/2);
+  title.p0 = new Point(cx, cy*2);
+  title.p1 = new Point(cx, cy*1);
+  title.p2 = new Point(cx, cy*0);
+  this.overlays.push(title);
+
   this.scene.addActor(this.player);
   this.scene.startForming(this.ticks, this.player.rect, 10);
-  this.health = 10;
+  this.health = 50;
   this.updateHealth(0);
   this.state = 2;		// unstarted
 }
@@ -193,7 +194,7 @@ Game.prototype.idle = function ()
     this.scene.transform(this.ticks);
     // player dead?
     if (this.player.isDead()) {
-      this.audios.hurt.play();
+      this.audios.death.play();
       this.unspawnPlayer();
     }
     break;
@@ -217,7 +218,7 @@ Game.prototype.idle = function ()
   removeArray(this.overlays, removed);
   // increment the tick count.
   this.ticks++;
-  this.labels.time.innerHTML = ("Time: "+Math.floor(this.ticks/this.framerate));
+  this.labels.time.innerHTML = ("Time Not Melted: "+Math.floor(this.ticks/this.framerate));
 }
 
 Game.prototype.repaint = function (ctx)
@@ -252,5 +253,5 @@ Game.prototype.action = function ()
 Game.prototype.updateHealth = function (d)
 {
   this.health += d;
-  this.labels.health.innerHTML = ("Health: "+this.health);
+  this.labels.health.innerHTML = (this.health+"/50");
 }

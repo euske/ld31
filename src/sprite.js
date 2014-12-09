@@ -2,12 +2,29 @@
 // "Sprite" is a static image shown in each animation frame for Actors.
 
 Sprite = {
-  // player.png
-  Player: 0,
+  // spritesheet_player.png
+  PlayerSpawnStart: 0,
+  PlayerSpawnEnd: 3,
+  PlayerIdleStart: 4,
+  PlayerIdleEnd: 7,
+  PlayerMoveStart: 8,
+  PlayerMoveEnd: 11,
+  PlayerJumpStart: 12,
+  PlayerJumpHang: 14,
+  PlayerJumpEnd: 16,
+  PlayerDeathStart: 17,
+  PlayerDeathEnd: 21,
   
-  // shadow.png
-  PlayerShadow: 1,
-  
+  // spritesheet_shadow.png
+  ShadowSpawnStart: 0,
+  ShadowSpawnEnd: 3,
+  ShadowIdle: 4,
+  ShadowJumpStart: 5,
+  ShadowJumpHang: 7,
+  ShadowJumpEnd: 9,
+  ShadowDeathStart: 10,
+  ShadowDeathEnd: 14,
+    
   // spritesheet_floor.png
   FloorFormingStart: 0,
   FloorFormingEnd: 4,
