@@ -72,18 +72,26 @@ function Player(game, scene, ticks, spritesize)
   this.vx = this.vy = 0;
   this.maxjump = 20;		// max duration of jumping.
   this.jumping = -1;		// jump counter.
+  // animation flags
+  this.isJumping = false;
+  this.spawning = false;
+  this.moving = false;
+  this.melting = false;
+  
+  this.pfIndex = 0;
+  this.sfIndex = 0;
 }
 
 Player.prototype.idle = function (ticks)
 {
   var vx = this.vx;
   var vy = this.vy;
-
+  
+  var ratio = 0.90;
+  var slipping = 0.2;
+  var r = this.rect.inset(this.rect.width*ratio, this.rect.height*ratio);
+  // Slipping Effect
   if (this.jumping < 0) {
-    // slipping effect.
-    var ratio = 0.75;
-    var slipping = 0.2;
-    var r = this.rect.inset(this.rect.width*ratio, this.rect.height*ratio);
     if (this.scene.checkAny(r.move(-r.width, 0), Tile.Empty)) {
       vx -= slipping;
     } else if (this.scene.checkAny(r.move(+r.width, 0), Tile.Empty)) {
@@ -95,10 +103,21 @@ Player.prototype.idle = function (ticks)
       vy += slipping;
     }
   }
-
-  var hitbox = new Rectangle(this.rect.x, this.rect.y+this.rect.height/2,
-			     this.rect.width, this.rect.height/2);
-  var speed = 8;
+  // Wall Pushing Effect (FINISH POST-COMPO)
+/*  if (this.scene.checkAny(r.move(-r.width/2, 0), Tile.Wall)) {
+	vx += slipping;
+  } else if (this.scene.checkAny(r.move(+r.width/2, 0), Tile.Wall)) {
+	vx -= slipping;
+  }
+  if (this.scene.checkAny(r.move(0, -r.height/2), Tile.Wall)) {
+    vy += slipping;
+  } else if (this.scene.checkAny(r.move(0, +r.height/2), Tile.Wall)) {
+    vy -= slipping;
+  }
+*/
+  // Hitbox Dimensions are hardcoded to match the sprite closely
+  var hitbox = new Rectangle(this.rect.x +7, this.rect.y +19, 18, 8);
+  var speed = 6;
   var d = this.scene.collideTiles(hitbox, speed*vx, speed*vy);
   d.x = this.scene.collideTiles(hitbox, speed*vx, d.y).x;
   d.y = this.scene.collideTiles(hitbox, d.x, speed*vy).y;
@@ -106,9 +125,12 @@ Player.prototype.idle = function (ticks)
   this.rect.y += d.y;
   if (0 <= this.jumping) {
     this.jumping++;
+	this.isJumping = true; // anim flag
     if (this.maxjump <= this.jumping) {
       this.jumping = -1;
     }
+  } else {
+	this.isJumping = false;
   }
   if (this.scene.pick(hitbox)) {
     this.game.audios.pick.play();
@@ -118,20 +140,157 @@ Player.prototype.idle = function (ticks)
 
 Player.prototype.repaint = function (ctx, x, y)
 {
+/*  var pFrame = this.pfIndex;
+  var sFrame = this.sfIndex;
+
+  var anim = new Transition(this.game.images.sprites_player, ticks);
+  var animShadow = new Transition(this.game.images.sprites_shadow, ticks);
+  
+  anim.rect = player.rect;
+  anim.layer = 1;
+  anim.delay = this.game.framerate/2;
+	
+  animShadow.rect = player.rect;
+  animShadow.layer = 0;
+  animShadow.delay = this.game.framerate/2;
+  
+  if (this.isJumping) {
+	anim.callback = (function(i) {
+      anim.sprite_index = Sprite.PlayerJumpStart+i;
+	  if (Sprite.PlayerJumpEnd < anim.sprite_index) {
+		anim.sprite_index = Sprite.PlayerJumpStart;
+	  }
+	});
+	anim.callback = 0;
+	
+	animShadow.callback = (function(i) {
+      animShadow.sprite_index = Sprite.ShadowJumpStart+i;
+	  if (Sprite.ShadowJumpEnd < animShadow.sprite_index) {
+		animShadow.sprite_index = Sprite.ShadowJumpStart;
+	  }
+	});
+	anim.callback = 0;
+	
+	pFrame = anim.sprite_index;
+	sFrame = animShadow.sprite_index;
+	
+  } else if (this.isMoving) {
+	anim.callback = (function(i) {
+      anim.sprite_index = Sprite.PlayerMoveStart+i;
+	  if (Sprite.PlayerMoveEnd < anim.sprite_index) {
+		anim.sprite_index = Sprite.PlayerMoveStart;
+	  }
+	});
+	anim.callback = 0;
+	
+	pFrame = anim.sprite_index;
+	sFrame = Sprite.ShadowIdle;
+	
+  } else if (this.isSpawning) {
+	anim.callback = (function(i) {
+      anim.sprite_index = Sprite.PlayerSpawnStart+i;
+	  if (Sprite.PlayerSpawnEnd < anim.sprite_index) {
+		this.isSpawning = false;
+	  }
+	});
+	anim.callback = 0;
+	
+	animShadow.callback = (function(i) {
+      animShadow.sprite_index = Sprite.ShadowSpawnStart+i;
+	  if (Sprite.ShadowSpawnEnd < animShadow.sprite_index) {
+		this.isSpawning = false;
+	  }
+	});
+	anim.callback = 0;
+	
+	pFrame = anim.sprite_index;
+	sFrame = animShadow.sprite_index;
+	
+  } else if (this.isMelting) {
+	anim.callback = (function(i) {
+      anim.sprite_index = Sprite.PlayerDeathStart+i;
+	  if (Sprite.PlayerDeathEnd < anim.sprite_index) {
+		this.melting = false;
+	  }
+	});
+	anim.callback = 0;
+	
+	animShadow.callback = (function(i) {
+      animShadow.sprite_index = Sprite.ShadowDeathStart+i;
+	  if (Sprite.ShadowDeathEnd < animShadow.sprite_index) {
+		this.isMelting = false;
+	  }
+	});
+	anim.callback = 0;
+	
+	pFrame = anim.sprite_index;
+	sFrame = animShadow.sprite_index;
+	
+  } else { //this.isIdle
+		anim.callback = (function(i) {
+      anim.sprite_index = Sprite.PlayerIdleStart+i;
+	  if (Sprite.PlayerIdleEnd < anim.sprite_index) {
+		anim.sprite_index = Sprite.PlayerIdleStart;
+	  }
+	});
+	anim.callback = 0;
+	
+	pFrame = anim.sprite_index;
+	sFrame = Sprite.ShadowIdle;
+  }
+*/
+	pFrame = Sprite.PlayerIdleStart;
+	sFrame = Sprite.ShadowIdle;
   // draw the shadow.
   ctx.drawImage(this.game.images.sprites_shadow,
-		Sprite.ShadowIdle*this.spritesize, 0, this.rect.width, this.rect.height,
+		sFrame*this.spritesize, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
-  // draw the player.
+
   if (0 <= this.jumping) {
     // add the jumping height.
     var t = (this.jumping/this.maxjump)-0.5;
     y -= (0.25-t*t)*6 * this.rect.height;
   }
+  // draw the player.
   ctx.drawImage(this.game.images.sprites_player,
-		Sprite.PlayerIdleStart*this.spritesize, 0, this.rect.width, this.rect.height,
+		pFrame*this.spritesize, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
 }
+
+/*	GENERIC ANIMATION COPYPASTE ZONE
+Player.prototype.animSpawn = function (ticks)
+{
+	var anim = new Transition(this.game.images.sprites_player, ticks);
+	var animShadow = new Transition(this.game.images.sprites_shadow, ticks);
+	
+	anim.rect = player.rect;
+	anim.layer = 1;
+	anim.delay = this.game.framerate/2;
+	
+	animShadow.rect = player.rect;
+	animShadow.layer = 0;
+	animShadow.delay = this.game.framerate/2;
+	
+	anim.callback = (function(i) {
+      anim.sprite_index = Sprite.PlayerStart+i;
+	  if (Sprite.PlayerEnd < anim.sprite_index) {
+		
+	  }
+	});
+	anim.callback = 0;
+	
+	animShadow.callback = (function(i) {
+      animShadow.sprite_index = Sprite.ShadowStart+i;
+	  if (Sprite.ShadowEnd < animShadow.sprite_index) {
+		
+	  }
+	});
+	animShadow.callback = 0;
+	
+	this.addTransition(this.player.rect.x, this.player.rect.y, anim);
+	this.addTransition(this.player.rect.x, this.player.rect.y, animShadow);
+}
+*/
 
 Player.prototype.isDead = function ()
 {

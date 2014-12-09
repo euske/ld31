@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<title>One Screen</title>
+<title>Do Not Melt</title>
 <script language="javascript" src="src/utils.js"></script>
 <script language="javascript" src="src/tile.js"></script>
 <script language="javascript" src="src/tilemap.js"></script>
@@ -35,7 +35,11 @@ function run()
   };
   window.setInterval(idle, 1000/framerate);
   window.addEventListener('keydown', function (e) { game.keydown(e);
-			if (e.keyCode == 32) { e.preventDefault(); }
+			if (e.keyCode == 32 ||
+				e.keyCode == 37 || 
+				e.keyCode == 38 || 
+				e.keyCode == 39 || 
+				e.keyCode == 40) { e.preventDefault(); }
 			});
   window.addEventListener('keyup', function (e) { game.keyup(e); });
   window.addEventListener('focus', function (e) { game.focus(e); game.repaint(ctx); });
@@ -70,10 +74,10 @@ function run()
   <img id="gameover" src="assets/images/gameover.png">
   <audio id="jump" type="audio/mpeg" src="assets/sounds/jump.mp3" preload="auto"></audio>
   <audio id="hurt" type="audio/mpeg" src="assets/sounds/hurt.mp3" preload="auto"></audio>
-  <audio id="death" type="audio/mpeg" src="assets/sounds/Death_Water.mp3" preload="auto"></audio>
+  <audio id="death" type="audio/mpeg" src="assets/sounds/Death_Water_alt_2.mp3" preload="auto"></audio>
   <audio id="icedrop" type="audio/mpeg" src="assets/sounds/ice_drop.mp3" preload="auto"></audio>
   <audio id="lavadrop" type="audio/mpeg" src="assets/sounds/lava_drop.mp3" preload="auto"></audio>
-  <audio id="intro" type="audio/mpeg" src="assets/musics/intro_jingle_2.mp3" preload="auto">-1</audio>
+  <audio id="intro" type="audio/mpeg" src="assets/musics/Guitar1_Intro.mp3" preload="auto">-1</audio>
   <audio id="music" type="audio/mpeg" src="assets/musics/Guitar1.mp3" preload="auto">-0.2</audio>
 </div>
 </body>

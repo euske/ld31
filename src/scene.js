@@ -213,6 +213,9 @@ Scene.prototype.transform = function (ticks)
 	    tilemap.get(p.x, p.y) == Tile.Floor) {
 	  this.startFormingWall(ticks, p);
 	}
+	if (tilemap.get(p.x, p.y) == Tile.Wall) {
+	  this.startCollapsingWall(ticks, p);
+	}
 	break;
       }
     }
@@ -283,7 +286,7 @@ Scene.prototype.startFormingWall = function (ticks, p)
   var tr = new Transition(this.game.images.sprites_wall, ticks);
   tr.rect = tilemap.map2coord(p);
   tr.rect.y += tr.rect.height-tr.sprites.height;
-  tr.layer = -1;
+  tr.layer = 0;	// CHANGING THIS FROM -1 TO 0 FIXED THE RENDERING BUG YOU SAID WAS TOO COMPLICATED TO FIX :V
   tr.delay = this.game.framerate/4;
   tr.callback = (function(i) {
     tr.sprite_index = Sprite.WallFormingStart+i;
@@ -306,7 +309,7 @@ Scene.prototype.startCollapsingFloor = function (ticks, p)
   tr.callback = (function(i) {
     tr.sprite_index = Sprite.FloorCollapsingStart+i;
     if (tr.sprite_index == Sprite.FloorCollapsingBreak) {
-      tr.layer = -1;
+      tr.layer = 0;
       tilemap.set(p.x, p.y, Tile.Empty);
     } else if (Sprite.FloorCollapsingEnd < tr.sprite_index) {
       tr.alive = false;
@@ -321,13 +324,14 @@ Scene.prototype.startCollapsingWall = function (ticks, p)
   var tilemap = this.tilemap;
   var tr = new Transition(this.game.images.sprites_wall, ticks);
   tr.rect = tilemap.map2coord(p);
+  tr.rect.y += tr.rect.height-tr.sprites.height;
+  tr.layer = 0;
   tr.delay = this.game.framerate/4;
+  tilemap.set(p.x, p.y-1, Tile.Floor);
+  tilemap.set(p.x, p.y, Tile.Floor);
   tr.callback = (function(i) {
     tr.sprite_index = Sprite.WallCollapsingStart+i;
-    if (tr.sprite_index == Sprite.WallCollapsingStart) {
-      tilemap.set(p.x, p.y-1, Tile.Empty);
-      tilemap.set(p.x, p.y, Tile.Empty);
-    } else if (Sprite.WallCollapsingEnd < tr.sprite_index) {
+    if (Sprite.WallCollapsingEnd < tr.sprite_index) {
       tr.alive = false;
     }
   });

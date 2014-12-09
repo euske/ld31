@@ -22,7 +22,11 @@ Game.prototype.keydown = function (ev)
 {
   switch (this.state) {
   case 1:
-    this.spawnPlayer();
+	switch (ev.keyCode) {
+	case 32:
+      this.spawnPlayer();
+	  break;
+	}
     break;
   case 3:
     this.resetPlayer();
@@ -105,10 +109,11 @@ Game.prototype.init = function ()
   var width = this.canvas.width/tilesize;
   var height = this.canvas.height/tilesize;
   this.ticks = 0;
+  this.currentTick = 0;
   this.scene = new Scene(this, tilesize, width, height);
   this.player = new Player(this, this.scene, this.ticks, tilesize);
   this.overlays = [];
-  this.play_music(this.audios.intro);
+  this.play_music(this.audios.music);
   this.focus();
   this.resetPlayer();
 }
@@ -119,14 +124,15 @@ Game.prototype.resetPlayer = function ()
   this.player.rect.y = Math.floor(this.scene.mapheight-this.player.rect.height)/2;
   this.scene.startCollapsing(this.ticks);
   this.scene.startForming(this.ticks, this.player.rect, 3);
+  this.currentTick = 0;
   this.state = 1;		// unspawned
 }
 
 Game.prototype.spawnPlayer = function ()
 {
   var title = new Overlay(this.images.title, this.ticks, this.framerate/3);
-  var cx = (this.canvas.width/2);
-  var cy = (this.canvas.height/2);
+  var cx = (this.canvas.width)/2;
+  var cy = ((this.canvas.height/2)-40);
   title.p0 = new Point(cx, cy*2);
   title.p1 = new Point(cx, cy*1);
   title.p2 = new Point(cx, cy*0);
@@ -137,16 +143,17 @@ Game.prototype.spawnPlayer = function ()
   this.health = 50;
   this.updateHealth(0);
   this.state = 2;		// unstarted
+  this.player.isSpawning = true;
 }
 
 Game.prototype.unspawnPlayer = function ()
 {
   var gameover = new Overlay(this.images.gameover, this.ticks, this.framerate/3);
-  var cx = (this.canvas.width-gameover.rect.width)/2;
-  var cy = (this.canvas.height-gameover.rect.height)/2;
-  gameover.p0 = new Point(cx*2, cy);
-  gameover.p1 = new Point(cx*1, cy);
-  gameover.p2 = new Point(cx*0, cy);
+  var cx = (this.canvas.width/2);
+  var cy = (this.canvas.height/2);
+  gameover.p0 = new Point(cx*2, cy-40);
+  gameover.p1 = new Point(cx*1, cy-40);
+  gameover.p2 = new Point(cx*0, cy-40);
   this.overlays.push(gameover);
   this.scene.removeActor(this.player);
   this.state = 3;
@@ -197,6 +204,7 @@ Game.prototype.idle = function ()
       this.audios.death.play();
       this.unspawnPlayer();
     }
+	this.currentTick++;
     break;
   }
   // play the next music.
@@ -218,7 +226,12 @@ Game.prototype.idle = function ()
   removeArray(this.overlays, removed);
   // increment the tick count.
   this.ticks++;
-  this.labels.time.innerHTML = ("Time Not Melted: "+Math.floor(this.ticks/this.framerate));
+  if (this.currentTick < this.framerate){
+	this.labels.time.innerHTML = ("Time Not Melted: 0");
+  }
+  else {
+	this.labels.time.innerHTML = ("Time Not Melted: "+Math.floor(this.currentTick/this.framerate));
+  }
 }
 
 Game.prototype.repaint = function (ctx)
@@ -253,5 +266,5 @@ Game.prototype.action = function ()
 Game.prototype.updateHealth = function (d)
 {
   this.health += d;
-  this.labels.health.innerHTML = (this.health+"/50");
+//  this.labels.health.innerHTML = (this.health+"/50");
 }
