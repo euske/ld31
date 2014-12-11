@@ -311,14 +311,20 @@ Scene.prototype.startCollapsingFloor = function (ticks, p)
 {
   var tilemap = this.tilemap;
   var tr = new Transition(this.game.images.sprites_floor, ticks);
+  var fr = this.game.framerate;
   tr.rect = tilemap.map2coord(p);
-  if (tr.sprite_index >= Sprite.FloorCollapsingBreak || this.game.state == 3){
-	tr.delay = this.game.framerate/10;
+  if (this.game.state == 3){	//	The break anim starts fast then plays slow. No clue why. Play it and you should notice what I mean.
+	tr.delay = this.game.framerate/6;
   } else {
-	tr.delay = this.game.framerate/2;
+	tr.delay = this.game.framerate;
   }
   tr.callback = (function(i) {
     tr.sprite_index = Sprite.FloorCollapsingStart+i;
+	if (tr.sprite_index >= Sprite.FloorCollapsingBreak) {
+	  tr.delay = fr/2;
+	} else {
+	  tr.delay = fr;
+	}
     if (tr.sprite_index == Sprite.FloorCollapsingBreak) {
       tr.layer = 0;
       tilemap.set(p.x, p.y, Tile.Empty);

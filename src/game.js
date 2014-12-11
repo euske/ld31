@@ -109,7 +109,6 @@ Game.prototype.init = function ()
   var width = this.canvas.width/tilesize;
   var height = this.canvas.height/tilesize;
   this.ticks = 0;
-  this.currentTick = 0;
   this.scene = new Scene(this, tilesize, width, height);
   this.player = new Player(this, this.scene, this.ticks, tilesize);
   this.overlays = [];
@@ -143,7 +142,7 @@ Game.prototype.spawnPlayer = function ()
   this.health = 50;
   this.updateHealth(0);
   this.state = 2;		// unstarted
-  this.player.isSpawning = true;
+  this.player.spawn();		// start animation
 }
 
 Game.prototype.unspawnPlayer = function ()
@@ -201,10 +200,13 @@ Game.prototype.idle = function ()
     this.scene.transform(this.ticks);
     // player dead?
     if (this.player.isDead()) {
+      this.player.melt();	// start animation
       this.audios.death.play();
       this.unspawnPlayer();
     }
-	this.currentTick++;
+    this.currentTick++;
+    var t = Math.floor(this.currentTick/this.framerate);
+    this.labels.time.innerHTML = ("Time Not Melted: "+t);
     break;
   }
   // play the next music.
@@ -226,12 +228,6 @@ Game.prototype.idle = function ()
   removeArray(this.overlays, removed);
   // increment the tick count.
   this.ticks++;
-  if (this.currentTick < this.framerate){
-	this.labels.time.innerHTML = ("Time Not Melted: 0");
-  }
-  else {
-	this.labels.time.innerHTML = ("Time Not Melted: "+Math.floor(this.currentTick/this.framerate));
-  }
 }
 
 Game.prototype.repaint = function (ctx)

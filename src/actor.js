@@ -72,20 +72,12 @@ function Player(game, scene, ticks, spritesize)
   this.vx = this.vy = 0;
   this.maxjump = 20;		// max duration of jumping.
   this.jumping = -1;		// jump counter.
+
   // animation flags
-  this.isJumping = false;
-  this.isFalling = false;
-  this.isSpawning = false;
-  this.isMoving = false;
-  this.isMelting = false;
-  
-//  this.pfIndex = 0;
-//  this.sfIndex = 0;
-  this.pFrame = 0;
-  this.sFrame = 0;
-  
-  this.trPlayer = new Transition(this.game.images.sprites_player, this.ticks);
-  this.trShadow = new Transition(this.game.images.sprites_shadow, this.ticks);
+  this.sprite_index = 0;
+  this.shadow_index = 0;
+  this.spawning = -1;		// spawning frame
+  this.melting = -1;
 }
 
 Player.prototype.idle = function (ticks)
@@ -109,20 +101,27 @@ Player.prototype.idle = function (ticks)
       vy += slipping;
     }
   }
+
   // Wall Pushing Effect (FINISH POST-COMPO)
-/*  if (this.scene.checkAny(r.move(-r.width/2, 0), Tile.Wall)) {
-	vx += slipping;
-  } else if (this.scene.checkAny(r.move(+r.width/2, 0), Tile.Wall)) {
-	vx -= slipping;
+  if (this.scene.checkAny(r.move(-r.width/2, 0), Tile.WallTop) ||
+      this.scene.checkAny(r.move(-r.width/2, 0), Tile.WallBottom)) {
+    vx += slipping;
+  } else if (this.scene.checkAny(r.move(+r.width/2, 0), Tile.WallTop) ||
+	     this.scene.checkAny(r.move(+r.width/2, 0), Tile.WallBottom)) {
+    vx -= slipping;
   }
-  if (this.scene.checkAny(r.move(0, -r.height/2), Tile.Wall)) {
+  if (this.scene.checkAny(r.move(0, -r.height/2), Tile.WallTop) ||
+      this.scene.checkAny(r.move(0, -r.height/2), Tile.WallBottom)) {
     vy += slipping;
-  } else if (this.scene.checkAny(r.move(0, +r.height/2), Tile.Wall)) {
+  } else if (this.scene.checkAny(r.move(0, +r.height/2), Tile.WallTop) ||
+	     this.scene.checkAny(r.move(0, +r.height/2), Tile.WallBottom)) {
     vy -= slipping;
   }
-*/
-  // Hitbox Dimensions are hardcoded to match the sprite closely
+  
+  // Hitbox Dimensions are hardcoded to match the sprite closely (-_-)
   var hitbox = new Rectangle(this.rect.x +6, this.rect.y +19, 20, 8);
+
+  // move 
   var speed = 6;
   var d = this.scene.collideTiles(hitbox, speed*vx, speed*vy);
   d.x = this.scene.collideTiles(hitbox, speed*vx, d.y).x;
@@ -132,173 +131,69 @@ Player.prototype.idle = function (ticks)
   if (0 <= this.jumping) {
     this.jumping++;
     if (this.maxjump <= this.jumping) {
-      this.jumping = -1;
-	  this.isJumping = false;
-	  this.isFalling = true;
-    } else {
-	  this.isJumping = true;
-	  this.isFalling = false;
-	}
-  } else {
-	this.isJumping = false;
-	this.isFalling = false;
+      this.jumping = -1;	// jump end.
+    }
   }
+
+  // pick anything?
   if (this.scene.pick(hitbox)) {
     this.game.audios.pick.play();
+  }
+
+  // animoo
+  var PlayerSpawnDuration = (Sprite.PlayerSpawnEnd-Sprite.PlayerSpawnStart);
+  var PlayerDeathDuration = (Sprite.PlayerDeathEnd-Sprite.PlayerDeathStart);
+  var PlayerJumpStartDuration = (Sprite.PlayerJumpHang-Sprite.PlayerJumpStart);
+  var PlayerJumpEndDuration = (Sprite.PlayerJumpEnd-Sprite.PlayerJumpHang);
+  var PlayerMoveDuration = (Sprite.PlayerMoveEnd-Sprite.PlayerMoveStart);
+  var PlayerIdleDuration = (Sprite.PlayerIdleEnd-Sprite.PlayerIdleStart);
+
+  if (0 <= this.spawning) {
+    // Player is Spawning
+    this.sprite_index = Sprite.PlayerSpawnStart+this.spawning;
+    this.shadow_index = Sprite.ShadowSpawnStart+this.spawning;
+    this.spawning++;
+    if (PlayerSpawnDuration <= this.spawning) {
+      this.spawning = -1;
+    }
+  } else if (0 <= this.melting) {
+    // Player is Melting
+    this.sprite_index = Sprite.PlayerDeathStart+this.spawning;
+    this.shadow_index = Sprite.ShadowDeathStart+this.spawning;
+    this.melting++;
+    if (PlayerDeathDuration <= this.melting) {
+      this.melting = -1;
+    }
+  } else if (0 <= this.jumping) {
+    // Player is jumping
+    if (this.jumping < PlayerJumpStartDuration) {
+      // Beginning of Jump
+      this.sprite_index = Sprite.PlayerJumpStart+this.jumping;
+    } else if (this.jumping < this.maxjump-PlayerJumpEndDuration) {
+      // Middle of jump
+      this.sprite_index = Sprite.PlayerJumpHang;
+    } else {
+      // Ending of Jump
+      this.sprite_index = (Sprite.PlayerJumpHang+this.jumping-
+		      (this.maxjump-PlayerJumpEndDuration));
+    }
+    this.shadow_index = Sprite.ShadowJumpHang;
+  } else if (this.vx != 0 || this.vy != 0) {
+    // Running on the ground (maybe too fast)
+    this.sprite_index = Sprite.PlayerMoveStart+(ticks % PlayerMoveDuration);
+    this.shadow_index = Sprite.ShadowIdle;
+  } else {
+    // Player is not pressing any inputs (Idle Animation)
+    this.sprite_index = Sprite.PlayerIdleStart+(ticks % PlayerIdleDuration);
+    this.shadow_index = Sprite.ShadowIdle;
   }
 }
 
 Player.prototype.repaint = function (ctx, x, y)
 {
-//	-- START OF ANIMATION BLOCK --
-//  var pFrame = this.pfIndex;
-//  var sFrame = this.sfIndex;
-
-//  var anim = new Transition(this.game.images.sprites_player, this.ticks);
-//  var animShadow = new Transition(this.game.images.sprites_shadow, this.ticks);
-  var anim = this.trPlayer;
-  var animShadow = this.trShadow;
-  
-  anim.rect = this.rect;
-  anim.layer = 1;
-  anim.delay = this.game.framerate;
-	
-  animShadow.rect = this.rect;
-  animShadow.layer = 0;
-  animShadow.delay = this.game.framerate;
-  
-  if (this.jumping) {
-    //	Beginning of Jump
-	if (this.isJumping) {
-	  anim.callback = (function(i) {
-		anim.sprite_index = Sprite.PlayerJumpStart+i;
-		if (Sprite.PlayerJumpHang < anim.sprite_index) {
-		  anim.sprite_index = Sprite.PlayerJumpHang;
-		  this.isJumping = false;
-		}
-	  });
-	  anim.callback = 0;
-	
-	  animShadow.callback = (function(i) {
-	    animShadow.sprite_index = Sprite.ShadowIdle-i;
-		if (Sprite.ShadowJumpHang > animShadow.sprite_index){
-		  animShadow.sprite_index = Sprite.ShadowHang;
-		}
-	  });
-	  animShadow.callback = 0;
-	//	Ending of Jump
-	} else if (this.isFalling) {
-	  anim.callback = (function(i) {
-		anim.sprite_index = Sprite.PlayerJumpHang+i;
-		if (Sprite.PlayerJumpEnd < anim.sprite_index) {
-		  anim.sprite_index = Sprite.PlayerJumpEnd;
-		  this.isFalling = false;
-		}
-	  });
-	  anim.callback = 0;
-	
-	  animShadow.callback = (function(i) {
-	    animShadow.sprite_index = Sprite.ShadowJumpHang+i;
-		if (Sprite.ShadowIdle > animShadow.sprite_index){
-		  animShadow.sprite_index = Sprite.ShadowIdle;
-		}
-	  });
-	  animShadow.callback = 0;
-	//	Middle of Jump
-	} else {
-	  anim.callback = (function(i) {
-		anim.sprite_index = Sprite.PlayerJumpHang;
-	  });
-	  anim.callback = 0;
-	
-	  animShadow.callback = (function(i) {
-		  animShadow.sprite_index = Sprite.ShadowJumpHang;
-	  });
-	  animShadow.callback = 0;
-	}
-	pFrame = anim.sprite_index;
-	sFrame = animShadow.sprite_index;
-	
-	//	Running on the ground
-  } else if (this.isMoving) {
-	anim.callback = (function(i) {
-      anim.sprite_index = Sprite.PlayerMoveStart+i;
-	  if (Sprite.PlayerMoveEnd < anim.sprite_index) {
-		anim.sprite_index = Sprite.PlayerMoveStart;
-	  }
-	});
-	anim.callback = 0;
-	
-	pFrame = anim.sprite_index;
-	sFrame = Sprite.ShadowIdle;
-	
-	//	Player is Spawning
-  } else if (this.isSpawning) {
-	anim.callback = (function(i) {
-      anim.sprite_index = Sprite.PlayerSpawnStart+i;
-	  if (Sprite.PlayerSpawnEnd < anim.sprite_index) {
-	    anim.sprite_index = Sprite.PlayerSpawnEnd;
-		this.isSpawning = false;
-	  }
-	});
-	anim.callback = 0;
-	
-	animShadow.callback = (function(i) {
-      animShadow.sprite_index = Sprite.ShadowSpawnStart+i;
-	  if (Sprite.ShadowSpawnEnd < animShadow.sprite_index) {
-		animShadow.sprite_index = Sprite.ShadowSpawnEnd;
-	  }
-	});
-	animShadow.callback = 0;
-	
-	pFrame = anim.sprite_index;
-	sFrame = animShadow.sprite_index;
-	//	Player is Dying
-  } else if (this.isMelting) {
-	anim.callback = (function(i) {
-      anim.sprite_index = Sprite.PlayerDeathStart+i;
-	  if (Sprite.PlayerDeathEnd < anim.sprite_index) {
-	    anim.sprite_index = Sprite.PlayerDeathEnd;
-		this.isMelting = false;
-	  }
-	});
-	anim.callback = 0;
-	
-	animShadow.callback = (function(i) {
-      animShadow.sprite_index = Sprite.ShadowDeathStart-i;
-	  if (Sprite.ShadowDeathEnd < animShadow.sprite_index) {
-		animShadow.sprite_index = Sprite.ShadowDeathEnd;
-	  }
-	});
-	animShadow.callback = 0;
-	
-	this.pFrame = anim.sprite_index;
-	this.sFrame = animShadow.sprite_index;
-	
-	//	Player is not pressing any inputs (Idle Animation)
-  } else {
-	anim.callback = (function(i) {
-      anim.sprite_index = Sprite.PlayerIdleStart+i;
-	  if (Sprite.PlayerIdleEnd < anim.sprite_index) {
-		anim.sprite_index = Sprite.PlayerIdleStart;
-	  }
-	});
-	anim.callback = 0;
-	
-	this.pFrame = anim.sprite_index;
-	this.sFrame = Sprite.ShadowIdle;
-  }
-  this.trPlayer.sprite_index = anim.sprite_index;
-  this.trShadow.sprite_index = animShadow.sprite_index;
-//	-- END OF ANIMATION BLOCK --
-
-// Uncomment these 2 lines if animation code doesn't work
-this.pFrame = Sprite.PlayerIdleStart;
-this.sFrame = Sprite.ShadowIdle;
-
   // draw the shadow.
   ctx.drawImage(this.game.images.sprites_shadow,
-		this.sFrame*this.spritesize, 0, this.rect.width, this.rect.height,
+		this.shadow_index*this.spritesize, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
 
   if (0 <= this.jumping) {
@@ -308,14 +203,14 @@ this.sFrame = Sprite.ShadowIdle;
   }
   // draw the player.
   ctx.drawImage(this.game.images.sprites_player,
-		this.pFrame*this.spritesize, 0, this.rect.width, this.rect.height,
+		this.sprite_index*this.spritesize, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
 }
 
 Player.prototype.isDead = function ()
 {
   //return false;			// disable dying.
-  if (0 <= this.jumping) {	//	MOVE THIS TO A HURT FUNCTION LATER (when one exists)
+  if (0 <= this.jumping) { //	MOVE THIS TO A HURT FUNCTION LATER (when one exists)
     return false;
   }
   var r = this.rect.inset(this.rect.width/2, this.rect.height/2);
@@ -328,4 +223,14 @@ Player.prototype.jump = function ()
     this.game.audios.jump.play();
     this.jumping = 0;
   }
+}
+
+Player.prototype.spawn = function ()
+{
+  this.spawning = 0;
+}
+
+Player.prototype.melt = function ()
+{
+  this.melting = 0;
 }
