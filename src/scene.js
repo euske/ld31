@@ -228,6 +228,8 @@ Scene.prototype.startForming = function (ticks, rect, max_radius)
   var max_size = 5;
   var r = tilemap.coord2map(rect);
   this.cracks = [];
+  var bx = Math.floor(this.tilemap.width/2);
+  var by = Math.floor(this.tilemap.height/2);
   for (var d = 0; d < max_radius; d++) {
     var cx = r.x + rnd(-(d+1), d+1);
     var cy = r.y + rnd(-(d+1), d+1);
@@ -236,7 +238,12 @@ Scene.prototype.startForming = function (ticks, rect, max_radius)
     for (var dy = -h; dy <= h; dy++) {
       for (var dx = -w; dx <= w; dx++) {
 	var p = new Point(cx+dx, cy+dy);
-	this.startFormingFloor(ticks, p);
+	if (Math.abs(bx-p.x) <= 10 &&
+	    Math.abs(by-p.y) <= 10 &&
+	    tilemap.get(p.x, p.y) != Tile.Floor) {
+	  // "If p is within the center 21x21 tiles and a floor tile is not already there"
+	  this.startFormingFloor(ticks, p);
+	}
       }
     }
     this.cracks.push(new Crack(cx, cy, w, h));
@@ -267,8 +274,8 @@ Scene.prototype.startFormingFloor = function (ticks, p)
   var tilemap = this.tilemap;
   var tr = new Transition(this.game.images.sprites_floor, ticks);
   tr.rect = tilemap.map2coord(p);
-  tr.layer = -1;
-  tr.delay = rnd(1, this.game.framerate/4);
+  tr.layer = 0;
+  tr.delay = rnd(1, this.game.framerate/6);
   tr.callback = (function(i) {
     tr.sprite_index = Sprite.FloorFormingStart+i;
     if (Sprite.FloorFormingEnd < tr.sprite_index) {
@@ -287,7 +294,7 @@ Scene.prototype.startFormingWall = function (ticks, p)
   tr.rect = tilemap.map2coord(p);
   tr.rect.y += tr.rect.height-tr.sprites.height;
   tr.layer = 0;	// CHANGING THIS FROM -1 TO 0 FIXED THE RENDERING BUG YOU SAID WAS TOO COMPLICATED TO FIX :V
-  tr.delay = this.game.framerate/4;
+  tr.delay = this.game.framerate/6;
   tr.callback = (function(i) {
     tr.sprite_index = Sprite.WallFormingStart+i;
     if (Sprite.WallFormingEnd < tr.sprite_index) {
@@ -305,7 +312,11 @@ Scene.prototype.startCollapsingFloor = function (ticks, p)
   var tilemap = this.tilemap;
   var tr = new Transition(this.game.images.sprites_floor, ticks);
   tr.rect = tilemap.map2coord(p);
-  tr.delay = this.game.framerate/4;
+  if (tr.sprite_index >= Sprite.FloorCollapsingBreak || this.game.state == 3){
+	tr.delay = this.game.framerate/10;
+  } else {
+	tr.delay = this.game.framerate/2;
+  }
   tr.callback = (function(i) {
     tr.sprite_index = Sprite.FloorCollapsingStart+i;
     if (tr.sprite_index == Sprite.FloorCollapsingBreak) {
@@ -326,7 +337,7 @@ Scene.prototype.startCollapsingWall = function (ticks, p)
   tr.rect = tilemap.map2coord(p);
   tr.rect.y += tr.rect.height-tr.sprites.height;
   tr.layer = 0;
-  tr.delay = this.game.framerate/4;
+  tr.delay = this.game.framerate/6;
   tilemap.set(p.x, p.y-1, Tile.Floor);
   tilemap.set(p.x, p.y, Tile.Floor);
   tr.callback = (function(i) {

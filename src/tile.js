@@ -105,6 +105,8 @@ Tile.getSideFloor = function (ul,uu,ur, ll, rr, dl,dd,dr)
     return 45;
   } else if (ul && !uu && !ur && !ll && !rr && dl && !dd && !dr) {
     return 46;
+  } else if (!ul && !uu && !ur && !ll && !rr && dl && !dd && dr) {
+    return 47;
   } else {
     return 0;
   }

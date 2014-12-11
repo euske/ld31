@@ -151,9 +151,9 @@ Game.prototype.unspawnPlayer = function ()
   var gameover = new Overlay(this.images.gameover, this.ticks, this.framerate/3);
   var cx = (this.canvas.width/2);
   var cy = (this.canvas.height/2);
-  gameover.p0 = new Point(cx*2, cy-40);
-  gameover.p1 = new Point(cx*1, cy-40);
-  gameover.p2 = new Point(cx*0, cy-40);
+  gameover.p0 = new Point(cx*2, cy+20);
+  gameover.p1 = new Point(cx*1, cy+20);
+  gameover.p2 = new Point(cx*0, cy+20);
   this.overlays.push(gameover);
   this.scene.removeActor(this.player);
   this.state = 3;

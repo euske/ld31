@@ -19,11 +19,9 @@ Sprite = {
   ShadowSpawnStart: 0,
   ShadowSpawnEnd: 3,
   ShadowIdle: 4,
-  ShadowJumpStart: 5,
-  ShadowJumpHang: 7,
-  ShadowJumpEnd: 9,
-  ShadowDeathStart: 10,
-  ShadowDeathEnd: 14,
+  ShadowJumpHang: 1,
+  ShadowDeathStart: 4,
+  ShadowDeathEnd: 0,
     
   // spritesheet_floor.png
   FloorFormingStart: 0,

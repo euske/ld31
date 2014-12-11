@@ -74,12 +74,18 @@ function Player(game, scene, ticks, spritesize)
   this.jumping = -1;		// jump counter.
   // animation flags
   this.isJumping = false;
-  this.spawning = false;
-  this.moving = false;
-  this.melting = false;
+  this.isFalling = false;
+  this.isSpawning = false;
+  this.isMoving = false;
+  this.isMelting = false;
   
-  this.pfIndex = 0;
-  this.sfIndex = 0;
+//  this.pfIndex = 0;
+//  this.sfIndex = 0;
+  this.pFrame = 0;
+  this.sFrame = 0;
+  
+  this.trPlayer = new Transition(this.game.images.sprites_player, this.ticks);
+  this.trShadow = new Transition(this.game.images.sprites_shadow, this.ticks);
 }
 
 Player.prototype.idle = function (ticks)
@@ -87,7 +93,7 @@ Player.prototype.idle = function (ticks)
   var vx = this.vx;
   var vy = this.vy;
   
-  var ratio = 0.90;
+  var ratio = 0.80;
   var slipping = 0.2;
   var r = this.rect.inset(this.rect.width*ratio, this.rect.height*ratio);
   // Slipping Effect
@@ -116,7 +122,7 @@ Player.prototype.idle = function (ticks)
   }
 */
   // Hitbox Dimensions are hardcoded to match the sprite closely
-  var hitbox = new Rectangle(this.rect.x +7, this.rect.y +19, 18, 8);
+  var hitbox = new Rectangle(this.rect.x +6, this.rect.y +19, 20, 8);
   var speed = 6;
   var d = this.scene.collideTiles(hitbox, speed*vx, speed*vy);
   d.x = this.scene.collideTiles(hitbox, speed*vx, d.y).x;
@@ -125,55 +131,95 @@ Player.prototype.idle = function (ticks)
   this.rect.y += d.y;
   if (0 <= this.jumping) {
     this.jumping++;
-	this.isJumping = true; // anim flag
     if (this.maxjump <= this.jumping) {
       this.jumping = -1;
-    }
+	  this.isJumping = false;
+	  this.isFalling = true;
+    } else {
+	  this.isJumping = true;
+	  this.isFalling = false;
+	}
   } else {
 	this.isJumping = false;
+	this.isFalling = false;
   }
   if (this.scene.pick(hitbox)) {
     this.game.audios.pick.play();
-    this.game.updateScore(+1);
   }
 }
 
 Player.prototype.repaint = function (ctx, x, y)
 {
-/*  var pFrame = this.pfIndex;
-  var sFrame = this.sfIndex;
+//	-- START OF ANIMATION BLOCK --
+//  var pFrame = this.pfIndex;
+//  var sFrame = this.sfIndex;
 
-  var anim = new Transition(this.game.images.sprites_player, ticks);
-  var animShadow = new Transition(this.game.images.sprites_shadow, ticks);
+//  var anim = new Transition(this.game.images.sprites_player, this.ticks);
+//  var animShadow = new Transition(this.game.images.sprites_shadow, this.ticks);
+  var anim = this.trPlayer;
+  var animShadow = this.trShadow;
   
-  anim.rect = player.rect;
+  anim.rect = this.rect;
   anim.layer = 1;
-  anim.delay = this.game.framerate/2;
+  anim.delay = this.game.framerate;
 	
-  animShadow.rect = player.rect;
+  animShadow.rect = this.rect;
   animShadow.layer = 0;
-  animShadow.delay = this.game.framerate/2;
+  animShadow.delay = this.game.framerate;
   
-  if (this.isJumping) {
-	anim.callback = (function(i) {
-      anim.sprite_index = Sprite.PlayerJumpStart+i;
-	  if (Sprite.PlayerJumpEnd < anim.sprite_index) {
-		anim.sprite_index = Sprite.PlayerJumpStart;
-	  }
-	});
-	anim.callback = 0;
+  if (this.jumping) {
+    //	Beginning of Jump
+	if (this.isJumping) {
+	  anim.callback = (function(i) {
+		anim.sprite_index = Sprite.PlayerJumpStart+i;
+		if (Sprite.PlayerJumpHang < anim.sprite_index) {
+		  anim.sprite_index = Sprite.PlayerJumpHang;
+		  this.isJumping = false;
+		}
+	  });
+	  anim.callback = 0;
 	
-	animShadow.callback = (function(i) {
-      animShadow.sprite_index = Sprite.ShadowJumpStart+i;
-	  if (Sprite.ShadowJumpEnd < animShadow.sprite_index) {
-		animShadow.sprite_index = Sprite.ShadowJumpStart;
-	  }
-	});
-	anim.callback = 0;
+	  animShadow.callback = (function(i) {
+	    animShadow.sprite_index = Sprite.ShadowIdle-i;
+		if (Sprite.ShadowJumpHang > animShadow.sprite_index){
+		  animShadow.sprite_index = Sprite.ShadowHang;
+		}
+	  });
+	  animShadow.callback = 0;
+	//	Ending of Jump
+	} else if (this.isFalling) {
+	  anim.callback = (function(i) {
+		anim.sprite_index = Sprite.PlayerJumpHang+i;
+		if (Sprite.PlayerJumpEnd < anim.sprite_index) {
+		  anim.sprite_index = Sprite.PlayerJumpEnd;
+		  this.isFalling = false;
+		}
+	  });
+	  anim.callback = 0;
 	
+	  animShadow.callback = (function(i) {
+	    animShadow.sprite_index = Sprite.ShadowJumpHang+i;
+		if (Sprite.ShadowIdle > animShadow.sprite_index){
+		  animShadow.sprite_index = Sprite.ShadowIdle;
+		}
+	  });
+	  animShadow.callback = 0;
+	//	Middle of Jump
+	} else {
+	  anim.callback = (function(i) {
+		anim.sprite_index = Sprite.PlayerJumpHang;
+	  });
+	  anim.callback = 0;
+	
+	  animShadow.callback = (function(i) {
+		  animShadow.sprite_index = Sprite.ShadowJumpHang;
+	  });
+	  animShadow.callback = 0;
+	}
 	pFrame = anim.sprite_index;
 	sFrame = animShadow.sprite_index;
 	
+	//	Running on the ground
   } else if (this.isMoving) {
 	anim.callback = (function(i) {
       anim.sprite_index = Sprite.PlayerMoveStart+i;
@@ -186,10 +232,12 @@ Player.prototype.repaint = function (ctx, x, y)
 	pFrame = anim.sprite_index;
 	sFrame = Sprite.ShadowIdle;
 	
+	//	Player is Spawning
   } else if (this.isSpawning) {
 	anim.callback = (function(i) {
       anim.sprite_index = Sprite.PlayerSpawnStart+i;
 	  if (Sprite.PlayerSpawnEnd < anim.sprite_index) {
+	    anim.sprite_index = Sprite.PlayerSpawnEnd;
 		this.isSpawning = false;
 	  }
 	});
@@ -198,36 +246,38 @@ Player.prototype.repaint = function (ctx, x, y)
 	animShadow.callback = (function(i) {
       animShadow.sprite_index = Sprite.ShadowSpawnStart+i;
 	  if (Sprite.ShadowSpawnEnd < animShadow.sprite_index) {
-		this.isSpawning = false;
+		animShadow.sprite_index = Sprite.ShadowSpawnEnd;
 	  }
 	});
-	anim.callback = 0;
+	animShadow.callback = 0;
 	
 	pFrame = anim.sprite_index;
 	sFrame = animShadow.sprite_index;
-	
+	//	Player is Dying
   } else if (this.isMelting) {
 	anim.callback = (function(i) {
       anim.sprite_index = Sprite.PlayerDeathStart+i;
 	  if (Sprite.PlayerDeathEnd < anim.sprite_index) {
-		this.melting = false;
-	  }
-	});
-	anim.callback = 0;
-	
-	animShadow.callback = (function(i) {
-      animShadow.sprite_index = Sprite.ShadowDeathStart+i;
-	  if (Sprite.ShadowDeathEnd < animShadow.sprite_index) {
+	    anim.sprite_index = Sprite.PlayerDeathEnd;
 		this.isMelting = false;
 	  }
 	});
 	anim.callback = 0;
 	
-	pFrame = anim.sprite_index;
-	sFrame = animShadow.sprite_index;
+	animShadow.callback = (function(i) {
+      animShadow.sprite_index = Sprite.ShadowDeathStart-i;
+	  if (Sprite.ShadowDeathEnd < animShadow.sprite_index) {
+		animShadow.sprite_index = Sprite.ShadowDeathEnd;
+	  }
+	});
+	animShadow.callback = 0;
 	
-  } else { //this.isIdle
-		anim.callback = (function(i) {
+	this.pFrame = anim.sprite_index;
+	this.sFrame = animShadow.sprite_index;
+	
+	//	Player is not pressing any inputs (Idle Animation)
+  } else {
+	anim.callback = (function(i) {
       anim.sprite_index = Sprite.PlayerIdleStart+i;
 	  if (Sprite.PlayerIdleEnd < anim.sprite_index) {
 		anim.sprite_index = Sprite.PlayerIdleStart;
@@ -235,15 +285,20 @@ Player.prototype.repaint = function (ctx, x, y)
 	});
 	anim.callback = 0;
 	
-	pFrame = anim.sprite_index;
-	sFrame = Sprite.ShadowIdle;
+	this.pFrame = anim.sprite_index;
+	this.sFrame = Sprite.ShadowIdle;
   }
-*/
-	pFrame = Sprite.PlayerIdleStart;
-	sFrame = Sprite.ShadowIdle;
+  this.trPlayer.sprite_index = anim.sprite_index;
+  this.trShadow.sprite_index = animShadow.sprite_index;
+//	-- END OF ANIMATION BLOCK --
+
+// Uncomment these 2 lines if animation code doesn't work
+this.pFrame = Sprite.PlayerIdleStart;
+this.sFrame = Sprite.ShadowIdle;
+
   // draw the shadow.
   ctx.drawImage(this.game.images.sprites_shadow,
-		sFrame*this.spritesize, 0, this.rect.width, this.rect.height,
+		this.sFrame*this.spritesize, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
 
   if (0 <= this.jumping) {
@@ -253,49 +308,14 @@ Player.prototype.repaint = function (ctx, x, y)
   }
   // draw the player.
   ctx.drawImage(this.game.images.sprites_player,
-		pFrame*this.spritesize, 0, this.rect.width, this.rect.height,
+		this.pFrame*this.spritesize, 0, this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
 }
-
-/*	GENERIC ANIMATION COPYPASTE ZONE
-Player.prototype.animSpawn = function (ticks)
-{
-	var anim = new Transition(this.game.images.sprites_player, ticks);
-	var animShadow = new Transition(this.game.images.sprites_shadow, ticks);
-	
-	anim.rect = player.rect;
-	anim.layer = 1;
-	anim.delay = this.game.framerate/2;
-	
-	animShadow.rect = player.rect;
-	animShadow.layer = 0;
-	animShadow.delay = this.game.framerate/2;
-	
-	anim.callback = (function(i) {
-      anim.sprite_index = Sprite.PlayerStart+i;
-	  if (Sprite.PlayerEnd < anim.sprite_index) {
-		
-	  }
-	});
-	anim.callback = 0;
-	
-	animShadow.callback = (function(i) {
-      animShadow.sprite_index = Sprite.ShadowStart+i;
-	  if (Sprite.ShadowEnd < animShadow.sprite_index) {
-		
-	  }
-	});
-	animShadow.callback = 0;
-	
-	this.addTransition(this.player.rect.x, this.player.rect.y, anim);
-	this.addTransition(this.player.rect.x, this.player.rect.y, animShadow);
-}
-*/
 
 Player.prototype.isDead = function ()
 {
   //return false;			// disable dying.
-  if (0 <= this.jumping) {
+  if (0 <= this.jumping) {	//	MOVE THIS TO A HURT FUNCTION LATER (when one exists)
     return false;
   }
   var r = this.rect.inset(this.rect.width/2, this.rect.height/2);
