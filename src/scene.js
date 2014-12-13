@@ -201,22 +201,84 @@ Scene.prototype.transform = function (ticks)
     var tilemap = this.tilemap;
     var p = crack.spread();
     if (p != null) {
-      switch (rnd(10)) {
+      switch (rnd(15)) {
       case 0:
-      case 1:
-	if (tilemap.get(p.x, p.y) == Tile.Floor) {
-	  this.startCollapsingFloor(ticks, p);
-	}
-	break;
-      case 2:
-	if (tilemap.get(p.x, p.y-1) == Tile.Floor &&
-	    tilemap.get(p.x, p.y) == Tile.Floor) {
-	  this.startFormingWall(ticks, p);
-	}
-	if (tilemap.get(p.x, p.y) == Tile.Wall) {
-	  this.startCollapsingWall(ticks, p);
-	}
-	break;
+      case 1:	//	destroy empty floor
+		if (tilemap.get(p.x, p.y) == Tile.Floor) {
+		  this.startCollapsingFloor(ticks, p);
+		}
+		break;
+      case 2:	//	create wall, damage & destroy ice in the way
+		if (tilemap.get(p.x, p.y) == Tile.Floor) {
+		  this.startFormingWall(ticks, p);
+		} else if (tilemap.get(p.x, p.y) == Tile.Ice){
+		  tilemap.set(p.x, p.y, Tile.IceCracking);
+		} else if (tilemap.get(p.x, p.y) == Tile.IceCracking) {
+		  tilemap.set(p.x, p.y, Tile.IceCracked);
+		} else if (tilemap.get(p.x, p.y-1) == Tile.Floor ||
+		  tilemap.get(p.x, p.y-1) == Tile.Empty && 
+		  tilemap.get(p.x, p.y) == Tile.IceCracked) {
+		  this.startCollapsingIce(ticks, p, Tile.WallBottom);
+		}
+		break;
+	  case 3:	//	create ice, destroy lava & spikes in the way
+		if (tilemap.get(p.x, p.y) == Tile.Floor &&
+			tilemap.get(p.x, p.y+1) != Tile.WallTop) {
+		  this.startFormingIce(ticks, p);
+		} else if (tilemap.get(p.x, p.y) == Tile.Lava) {
+	  	  this.startCollapsingLava(ticks, p, Tile.Ice);
+		} else if (tilemap.get(p.x, p.y) == Tile.Spikes) {
+		  this.startCollapsingSpikes(p.x, p.y, Tile.Ice);
+		}
+		break;
+	  case 4:	//	create lava, destroy ice & spikes in the way
+		if (tilemap.get(p.x, p.y) == Tile.Floor &&
+			tilemap.get(p.x, p.y+1) != Tile.WallTop) {
+		  this.startFormingLava(ticks, p);
+		} else if (tilemap.get(p.x, p.y) == Tile.Ice ||
+		  tilemap.get(p.x, p.y) == Tile.IceCracking ||
+		  tilemap.get(p.x, p.y) == Tile.IceCracked) {
+		  this.startCollapsingIce(ticks, p, Tile.Lava);
+		} else if (tilemap.get(p.x, p.y) == Tile.Spikes) {
+		  this.startCollapsingSpikes(ticks, p, Tile.Lava);
+		}
+		break;
+	  case 5:	//	create spikes, damage ice in the way
+		if (tilemap.get(p.x, p.y) == Tile.Floor &&
+			tilemap.get(p.x, p.y+1) != Tile.WallTop) {
+		  this.startFormingSpikes(ticks, p);
+		} else if (tilemap.get(p.x, p.y) == Tile.Ice) {
+		  tilemap.set(p.x, p.y, Tile.IceCracking);
+		} else if (tilemap.get(p.x, p.y) == Tile.IceCracking) {
+		  tilemap.set(p.x, p.y, Tile.IceCracked);
+		} else if (tilemap.get(p.x, p.y, Tile.IceCracked)) {
+		  this.startCollapsingIce(ticks, p, Tile.Spikes);
+		}
+		break;
+	  case 6:	//	destroy wall (on its own)
+		if (tilemap.get(p.x, p.y) == Tile.WallBottom) {
+		  this.startCollapsingWall(ticks, p);
+		}
+		break;
+	  case 7:	//	damage and destroy ice (on its own/water)
+		if (tilemap.get(p.x, p.y) == Tile.Ice) {
+		  tilemap.set(p.x, p.y, Tile.IceCracking);
+		} else if (tilemap.get(p.x, p.y) == Tile.IceCracking) {
+		  tilemap.set(p.x, p.y, Tile.IceCracked);
+		} else if (tilemap.get(p.x, p.y) == Tile.IceCracked) {
+		  this.startCollapsingIce(ticks, p, 0);
+		}
+		break;
+	  case 8:	//	destroy lava (on its own)
+		if (tilemap.get(p.x, p.y) == Tile.Lava) {
+		  this.startCollapsingLava(ticks, p, 0);
+		}
+		break;
+	  case 9:	//	destroy spikes (on its own)
+		if (tilemap.get(p.x, p.y) == Tile.Spikes) {
+		  this.startCollapsingSpikes(ticks, p, 0);
+		}
+		break;
       }
     }
   }
@@ -350,6 +412,126 @@ Scene.prototype.startCollapsingWall = function (ticks, p)
     tr.sprite_index = Sprite.WallCollapsingStart+i;
     if (Sprite.WallCollapsingEnd < tr.sprite_index) {
       tr.alive = false;
+    }
+  });
+  tr.callback(0);
+  this.addTransition(p.x, p.y, tr);
+}
+
+Scene.prototype.startFormingIce = function (ticks, p)
+{
+  var tilemap = this.tilemap;
+  var tr = new Transition(this.game.images.tiles_ice, ticks);
+  tr.rect = tilemap.map2coord(p);
+  tr.layer = 0;
+  tr.delay = this.game.framerate/6;
+  tr.callback = (function(i) {
+    tr.sprite_index = Sprite.IceFormingStart+i;
+    if (Sprite.IceFormingEnd < tr.sprite_index) {
+      tr.alive = false;
+      tilemap.set(p.x, p.y, Tile.Ice);
+    }
+  });
+  tr.callback(0);
+  this.addTransition(p.x, p.y, tr);
+}
+Scene.prototype.startCollapsingIce = function (ticks, p, c) // c is what condition caused the tile to change
+{
+  var tilemap = this.tilemap;
+  var tr = new Transition(this.game.images.tiles_ice, ticks);
+  tr.rect = tilemap.map2coord(p);
+  tr.layer = 1;
+  tr.delay = this.game.framerate/6;
+  tr.callback = (function(i) {
+    tr.sprite_index = Sprite.IceBreakingStart+i;
+    if (Sprite.IceBreakingEnd < tr.sprite_index) {
+      tr.alive = false;
+	  tilemap.set(p.x, p.y, Tile.Floor);
+	  if (c == Tile.WallBottom) {
+		this.startFormingWall(ticks, p);
+	  } else if (c == Tile.Lava) {
+		this.startFormingLava(ticks, p);
+	  } else if (c == Tile.Spikes) {
+		this.startFormingSpikes(ticks, p);
+	  }
+    }
+  });
+  tr.callback(0);
+  this.addTransition(p.x, p.y, tr);
+}
+
+Scene.prototype.startFormingLava = function (ticks, p)
+{
+  var tilemap = this.tilemap;
+  var tr = new Transition(this.game.images.tiles_lava, ticks);
+  tr.rect = tilemap.map2coord(p);
+  tr.layer = 0;
+  tr.delay = this.game.framerate/6;
+  tr.callback = (function(i) {
+    tr.sprite_index = Sprite.LavaFormingStart+i;
+    if (Sprite.lavaFormingEnd < tr.sprite_index) {
+      tr.alive = false;
+      tilemap.set(p.x, p.y, Tile.Lava);
+    }
+  });
+  tr.callback(0);
+  this.addTransition(p.x, p.y, tr);
+}
+Scene.prototype.startCollapsingLava = function (ticks, p, c)
+{
+  var tilemap = this.tilemap;
+  var tr = new Transition(this.game.images.tiles_lava, ticks);
+  tr.rect = tilemap.map2coord(p);
+  tr.layer = 0;
+  tr.delay = this.game.framerate/6;
+  tr.callback = (function(i) {
+    tr.sprite_index = Sprite.LavaBreakingStart+i;
+    if (Sprite.LavaBreakingEnd < tr.sprite_index) {
+      tr.alive = false;
+      tilemap.set(p.x, p.y, Tile.Floor);
+	  if (c == Tile.Ice) {
+		this.startFormingIce(ticks, p);
+	  }
+    }
+  });
+  tr.callback(0);
+  this.addTransition(p.x, p.y, tr);
+}
+
+Scene.prototype.startFormingSpikes = function (ticks, p)
+{
+  var tilemap = this.tilemap;
+  var tr = new Transition(this.game.images.tiles_spikes, ticks);
+  tr.rect = tilemap.map2coord(p);
+  tr.layer = 0;
+  tr.delay = this.game.framerate/6;
+  tr.callback = (function(i) {
+    tr.sprite_index = Sprite.SpikesStart+i;
+    if (Sprite.SpikesEnd < tr.sprite_index) {
+      tr.alive = false;
+      tilemap.set(p.x, p.y, Tile.Spikes);
+    }
+  });
+  tr.callback(0);
+  this.addTransition(p.x, p.y, tr);
+}
+Scene.prototype.startCollapsingSpikes = function (ticks, p, c)
+{
+  var tilemap = this.tilemap;
+  var tr = new Transition(this.game.images.tiles_spikes, ticks);
+  tr.rect = tilemap.map2coord(p);
+  tr.layer = 0;
+  tr.delay = this.game.framerate/6;
+  tr.callback = (function(i) {
+    tr.sprite_index = Sprite.SpikesEnd-i;
+    if (Sprite.SpikesStart > tr.sprite_index) {
+      tr.alive = false;
+      tilemap.set(p.x, p.y, Tile.Floor);
+	  if (c == Tile.Ice) {
+		this.startFormingIce(ticks, p);
+	  } else if (c == Tile.Lava) {
+		this.startFormingLava(ticks, p);
+	  }
     }
   });
   tr.callback(0);

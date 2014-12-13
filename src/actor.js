@@ -85,7 +85,7 @@ Player.prototype.idle = function (ticks)
   var vx = this.vx;
   var vy = this.vy;
   
-  var ratio = 0.80;
+  var ratio = 0.85;
   var slipping = 0.2;
   var r = this.rect.inset(this.rect.width*ratio, this.rect.height*ratio);
   // Slipping Effect
@@ -102,7 +102,7 @@ Player.prototype.idle = function (ticks)
     }
   }
 
-  // Wall Pushing Effect (FINISH POST-COMPO)
+  // Wall Pushing Effect (Vertical checks need tweaking. Run up towards the bottom of a wall and you'll see what I mean)
   if (this.scene.checkAny(r.move(-r.width/2, 0), Tile.WallTop) ||
       this.scene.checkAny(r.move(-r.width/2, 0), Tile.WallBottom)) {
     vx += slipping;
@@ -118,7 +118,7 @@ Player.prototype.idle = function (ticks)
     vy -= slipping;
   }
   
-  // Hitbox Dimensions are hardcoded to match the sprite closely (-_-)
+  // Hitbox Dimensions are hardcoded to match the sprite closely (-_-)  :D
   var hitbox = new Rectangle(this.rect.x +6, this.rect.y +19, 20, 8);
 
   // move 
@@ -137,16 +137,19 @@ Player.prototype.idle = function (ticks)
 
   // pick anything?
   if (this.scene.pick(hitbox)) {
+    this.game.audios.pick.currentTime = 0;
     this.game.audios.pick.play();
   }
 
-  // animoo
+  // animu~
   var PlayerSpawnDuration = (Sprite.PlayerSpawnEnd-Sprite.PlayerSpawnStart);
   var PlayerDeathDuration = (Sprite.PlayerDeathEnd-Sprite.PlayerDeathStart);
   var PlayerJumpStartDuration = (Sprite.PlayerJumpHang-Sprite.PlayerJumpStart);
   var PlayerJumpEndDuration = (Sprite.PlayerJumpEnd-Sprite.PlayerJumpHang);
   var PlayerMoveDuration = (Sprite.PlayerMoveEnd-Sprite.PlayerMoveStart);
   var PlayerIdleDuration = (Sprite.PlayerIdleEnd-Sprite.PlayerIdleStart);
+  var ticks2 = Math.floor(ticks/2); // ticks in 1/2 speed
+  var ticks4 = Math.floor(ticks/4); // ticks in 1/4 speed
 
   if (0 <= this.spawning) {
     // Player is Spawning
@@ -169,22 +172,30 @@ Player.prototype.idle = function (ticks)
     if (this.jumping < PlayerJumpStartDuration) {
       // Beginning of Jump
       this.sprite_index = Sprite.PlayerJumpStart+this.jumping;
+	  this.shadow_index = Sprite.ShadowIdle-this.jumping;
     } else if (this.jumping < this.maxjump-PlayerJumpEndDuration) {
       // Middle of jump
       this.sprite_index = Sprite.PlayerJumpHang;
+	  this.shadow_index = Sprite.ShadowJumpHang;
     } else {
       // Ending of Jump
       this.sprite_index = (Sprite.PlayerJumpHang+this.jumping-
 		      (this.maxjump-PlayerJumpEndDuration));
+	  this.shadow_index = (Sprite.ShadowJumpHang+this.jumping-
+			  (this.maxjump-PlayerJumpEndDuration));
     }
+/* Shadow Jump notes:
+Jump starts at 4, goes to 1 and hangs there, then goes back to 4 when
+the player falls. (Idle -> JumpHang -> Idle)
+*/
     this.shadow_index = Sprite.ShadowJumpHang;
   } else if (this.vx != 0 || this.vy != 0) {
     // Running on the ground (maybe too fast)
-    this.sprite_index = Sprite.PlayerMoveStart+(ticks % PlayerMoveDuration);
+    this.sprite_index = Sprite.PlayerMoveStart+(ticks2 % PlayerMoveDuration);
     this.shadow_index = Sprite.ShadowIdle;
   } else {
-    // Player is not pressing any inputs (Idle Animation)
-    this.sprite_index = Sprite.PlayerIdleStart+(ticks % PlayerIdleDuration);
+    // Player is not pressing any inputs (Idle Animation) (also too fast)
+    this.sprite_index = Sprite.PlayerIdleStart+(ticks4 % PlayerIdleDuration);
     this.shadow_index = Sprite.ShadowIdle;
   }
 }
@@ -220,6 +231,7 @@ Player.prototype.isDead = function ()
 Player.prototype.jump = function ()
 {
   if (this.jumping < 0) {
+    this.game.audios.jump.currentTime = 0;
     this.game.audios.jump.play();
     this.jumping = 0;
   }

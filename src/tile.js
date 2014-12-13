@@ -6,6 +6,11 @@ Tile = {
   Floor: 1,
   WallTop: 2,
   WallBottom: 3,
+  Ice: 4,
+  IceCracking: 5,
+  IceCracked: 6,
+  Lava: 7,
+  Spikes: 8,
 };
 
 Tile.getFloor = function ()

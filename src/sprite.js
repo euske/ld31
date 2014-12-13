@@ -69,8 +69,6 @@ Sprite = {
   IceDropLandingEnd: 5,
   
   // tilemap_spikes.png
-  SpikeFormingStart: 0,
-  SpikeFormingEnd: 2,
-  SpikeBreakingStart: 2,
-  SpikeBreakingEnd: 4,
+  SpikesStart: 0,
+  SpikesEnd: 2,
 };
