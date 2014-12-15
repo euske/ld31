@@ -33,8 +33,6 @@ Sprite = {
   // spritesheet_walls.png
   WallFormingStart: 0,
   WallFormingEnd: 4,
-  WallCollapsingStart: 4,
-  WallCollapsingEnd: 8,
   
   // tilemap_lava.png
   LavaFormingStart: 0,

@@ -80,49 +80,49 @@ function Player(game, scene, ticks, spritesize)
   this.melting = -1;
 }
 
-Player.prototype.idle = function (ticks)
+Player.prototype.move = function (vx, vy)
 {
-  var vx = this.vx;
-  var vy = this.vy;
-  
+  var speed = 6;
   var ratio = 0.85;
   var slipping = 0.2;
-  var r = this.rect.inset(this.rect.width*ratio, this.rect.height*ratio);
+  var bounds = this.rect.inset(this.rect.width*ratio, this.rect.height*ratio);
+  
   // Slipping Effect
   if (this.jumping < 0) {
-    if (this.scene.checkAny(r.move(-r.width, 0), Tile.Empty)) {
+    if (this.scene.checkAny(bounds.move(-bounds.width, 0), Tile.Empty)) {
       vx -= slipping;
-    } else if (this.scene.checkAny(r.move(+r.width, 0), Tile.Empty)) {
+    } else if (this.scene.checkAny(bounds.move(+bounds.width, 0), Tile.Empty)) {
       vx += slipping;
     }
-    if (this.scene.checkAny(r.move(0, -r.height), Tile.Empty)) {
+    if (this.scene.checkAny(bounds.move(0, -bounds.height), Tile.Empty)) {
       vy -= slipping;
-    } else if (this.scene.checkAny(r.move(0, +r.height), Tile.Empty)) {
+    } else if (this.scene.checkAny(bounds.move(0, +bounds.height), Tile.Empty)) {
       vy += slipping;
     }
   }
 
-  // Wall Pushing Effect (Vertical checks need tweaking. Run up towards the bottom of a wall and you'll see what I mean)
-  if (this.scene.checkAny(r.move(-r.width/2, 0), Tile.WallTop) ||
-      this.scene.checkAny(r.move(-r.width/2, 0), Tile.WallBottom)) {
+  // Wall Pushing Effect
+  // (Vertical checks need tweaking.
+  //  Run up towards the bottom of a wall and you'll see what I mean)
+  if (this.scene.checkAny(bounds.move(-bounds.width/2, 0), Tile.WallTop) ||
+      this.scene.checkAny(bounds.move(-bounds.width/2, 0), Tile.WallBottom)) {
     vx += slipping;
-  } else if (this.scene.checkAny(r.move(+r.width/2, 0), Tile.WallTop) ||
-	     this.scene.checkAny(r.move(+r.width/2, 0), Tile.WallBottom)) {
+  } else if (this.scene.checkAny(bounds.move(+bounds.width/2, 0), Tile.WallTop) ||
+	     this.scene.checkAny(bounds.move(+bounds.width/2, 0), Tile.WallBottom)) {
     vx -= slipping;
   }
-  if (this.scene.checkAny(r.move(0, -r.height/2), Tile.WallTop) ||
-      this.scene.checkAny(r.move(0, -r.height/2), Tile.WallBottom)) {
+  if (this.scene.checkAny(bounds.move(0, -bounds.height/2), Tile.WallTop) ||
+      this.scene.checkAny(bounds.move(0, -bounds.height/2), Tile.WallBottom)) {
     vy += slipping;
-  } else if (this.scene.checkAny(r.move(0, +r.height/2), Tile.WallTop) ||
-	     this.scene.checkAny(r.move(0, +r.height/2), Tile.WallBottom)) {
+  } else if (this.scene.checkAny(bounds.move(0, +bounds.height/2), Tile.WallTop) ||
+	     this.scene.checkAny(bounds.move(0, +bounds.height/2), Tile.WallBottom)) {
     vy -= slipping;
   }
   
   // Hitbox Dimensions are hardcoded to match the sprite closely (-_-)  :D
-  var hitbox = new Rectangle(this.rect.x +6, this.rect.y +19, 20, 8);
+  var hitbox = new Rectangle(this.rect.x+6, this.rect.y+19, 20, 8);
 
   // move 
-  var speed = 6;
   var d = this.scene.collideTiles(hitbox, speed*vx, speed*vy);
   d.x = this.scene.collideTiles(hitbox, speed*vx, d.y).x;
   d.y = this.scene.collideTiles(hitbox, d.x, speed*vy).y;
@@ -140,7 +140,10 @@ Player.prototype.idle = function (ticks)
     this.game.audios.pick.currentTime = 0;
     this.game.audios.pick.play();
   }
+}
 
+Player.prototype.animu = function (ticks)
+{
   // animu~
   var PlayerSpawnDuration = (Sprite.PlayerSpawnEnd-Sprite.PlayerSpawnStart);
   var PlayerDeathDuration = (Sprite.PlayerDeathEnd-Sprite.PlayerDeathStart);
@@ -150,11 +153,12 @@ Player.prototype.idle = function (ticks)
   var PlayerIdleDuration = (Sprite.PlayerIdleEnd-Sprite.PlayerIdleStart);
   var ticks2 = Math.floor(ticks/2); // ticks in 1/2 speed
   var ticks4 = Math.floor(ticks/4); // ticks in 1/4 speed
+  var ticks8 = Math.floor(ticks/8); // ticks in 1/8 speed
 
   if (0 <= this.spawning) {
     // Player is Spawning
-    this.sprite_index = Sprite.PlayerSpawnStart+this.spawning;
-    this.shadow_index = Sprite.ShadowSpawnStart+this.spawning;
+    this.sprite_index = Sprite.PlayerSpawnStart+(ticks8 % PlayerSpawnDuration);//this.spawning;
+    this.shadow_index = Sprite.ShadowSpawnStart+(ticks8 % PlayerSpawnDuration);//this.spawning;
     this.spawning++;
     if (PlayerSpawnDuration <= this.spawning) {
       this.spawning = -1;
@@ -172,32 +176,40 @@ Player.prototype.idle = function (ticks)
     if (this.jumping < PlayerJumpStartDuration) {
       // Beginning of Jump
       this.sprite_index = Sprite.PlayerJumpStart+this.jumping;
-	  this.shadow_index = Sprite.ShadowIdle-this.jumping;
+      this.shadow_index = Sprite.ShadowIdle-this.jumping;
     } else if (this.jumping < this.maxjump-PlayerJumpEndDuration) {
       // Middle of jump
       this.sprite_index = Sprite.PlayerJumpHang;
-	  this.shadow_index = Sprite.ShadowJumpHang;
+      this.shadow_index = Sprite.ShadowJumpHang;
     } else {
       // Ending of Jump
       this.sprite_index = (Sprite.PlayerJumpHang+this.jumping-
-		      (this.maxjump-PlayerJumpEndDuration));
-	  this.shadow_index = (Sprite.ShadowJumpHang+this.jumping-
-			  (this.maxjump-PlayerJumpEndDuration));
+			   (this.maxjump-PlayerJumpEndDuration));
+      this.shadow_index = (Sprite.ShadowJumpHang+this.jumping-
+			   (this.maxjump-PlayerJumpEndDuration));
     }
-/* Shadow Jump notes:
-Jump starts at 4, goes to 1 and hangs there, then goes back to 4 when
-the player falls. (Idle -> JumpHang -> Idle)
-*/
+    /* Shadow Jump notes:
+       Jump starts at 4, goes to 1 and hangs there, then goes back to 4 when
+       the player falls. (Idle -> JumpHang -> Idle)
+    */
     this.shadow_index = Sprite.ShadowJumpHang;
   } else if (this.vx != 0 || this.vy != 0) {
-    // Running on the ground (maybe too fast)
+    // Running on the ground
     this.sprite_index = Sprite.PlayerMoveStart+(ticks2 % PlayerMoveDuration);
     this.shadow_index = Sprite.ShadowIdle;
   } else {
-    // Player is not pressing any inputs (Idle Animation) (also too fast)
+    // Player is not pressing any inputs (Idle Animation)
     this.sprite_index = Sprite.PlayerIdleStart+(ticks4 % PlayerIdleDuration);
     this.shadow_index = Sprite.ShadowIdle;
   }
+}
+
+Player.prototype.idle = function (ticks)
+{
+  if (!this.isDisabled()) {
+    this.move(this.vx, this.vy);
+  }
+  this.animu(ticks);
 }
 
 Player.prototype.repaint = function (ctx, x, y)
@@ -226,6 +238,13 @@ Player.prototype.isDead = function ()
   }
   var r = this.rect.inset(this.rect.width/2, this.rect.height/2);
   return this.scene.checkAll(r, Tile.Empty);
+}
+
+// Returns true if the player is in spawning/despawning.
+Player.prototype.isDisabled = function ()
+{
+  return (0 <= this.spawning ||
+	  0 <= this.melting);
 }
 
 Player.prototype.jump = function ()

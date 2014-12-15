@@ -22,14 +22,11 @@ Game.prototype.keydown = function (ev)
 {
   switch (this.state) {
   case 1:
-	switch (ev.keyCode) {
-	case 32:
+    switch (ev.keyCode) {
+    case 32:
       this.spawnPlayer();
-	  break;
-	}
-    break;
-  case 3:
-    this.resetPlayer();
+      break;
+    }
     break;
   case 2:
     switch (ev.keyCode) {
@@ -69,6 +66,8 @@ Game.prototype.keydown = function (ev)
       this.active = !this.active;
       break;
     }
+    break;
+  case 4:
     break;
   }
 }
@@ -121,9 +120,7 @@ Game.prototype.resetPlayer = function ()
 {
   this.player.rect.x = Math.floor(this.scene.mapwidth-this.player.rect.width)/2;
   this.player.rect.y = Math.floor(this.scene.mapheight-this.player.rect.height)/2;
-  this.scene.startCollapsing(this.ticks);
-  this.scene.startForming(this.ticks, this.player.rect, 3);
-  this.currentTick = 0;
+  this.scene.startFormingLevel(this.ticks, this.player.rect, 3);
   this.state = 1;		// unspawned
 }
 
@@ -138,11 +135,18 @@ Game.prototype.spawnPlayer = function ()
   this.overlays.push(title);
 
   this.scene.addActor(this.player);
-  this.scene.startForming(this.ticks, this.player.rect, 10);
-  this.health = 50;
+  this.scene.startFormingLevel(this.ticks, this.player.rect, 10);
+  this.health = 100;
+  this.survived = 0;
   this.updateHealth(0);
   this.state = 2;		// unstarted
   this.player.spawn();		// start animation
+}
+
+Game.prototype.meltPlayer = function ()
+{
+  this.player.melt();	// start animation
+  this.state = 3;	// dead
 }
 
 Game.prototype.unspawnPlayer = function ()
@@ -155,7 +159,8 @@ Game.prototype.unspawnPlayer = function ()
   gameover.p2 = new Point(cx*0, cy+40);
   this.overlays.push(gameover);
   this.scene.removeActor(this.player);
-  this.state = 3;
+  this.scene.startCollapsingAll(this.ticks);
+  this.state = 4;		// resettting
 }
 
 Game.prototype.focus = function (ev)
@@ -189,7 +194,6 @@ Game.prototype.idle = function ()
 {
   switch (this.state) {
   case 1:
-  case 3:
     // move everything in the scene (including the player).
     this.scene.idle(this.ticks);
     break;
@@ -200,14 +204,24 @@ Game.prototype.idle = function ()
     this.scene.transform(this.ticks);
     // player dead?
     if (this.player.isDead()) {
-      this.player.melt();	// start animation
       this.audios.death.currentTime = 0;
       this.audios.death.play();
-      this.unspawnPlayer();
+      this.meltPlayer();
     }
-    this.currentTick++;
-    var t = Math.floor(this.currentTick/this.framerate);
+    this.survived++;
+    var t = Math.floor(this.survived/this.framerate);
     this.labels.time.innerHTML = ("Time Not Melted: "+t);
+    break;
+  case 3:
+    // move everything in the scene (including the player).
+    this.scene.idle(this.ticks);
+    if (!this.player.isDisabled()) {
+      this.unspawnPlayer();
+      this.resetPlayer();
+    }
+    break;
+  case 4:
+    this.scene.idle(this.ticks);
     break;
   }
   // play the next music.
