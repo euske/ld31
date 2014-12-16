@@ -109,7 +109,10 @@ Game.prototype.init = function ()
   var height = this.canvas.height/tilesize;
   this.ticks = 0;
   this.scene = new Scene(this, tilesize, width, height);
-  this.player = new Player(this, this.scene, this.ticks, tilesize);
+  // Hitbox Dimensions are hardcoded to match the sprite closely (-_-)  :D
+  var hitbox = new Rectangle(6, 19, 20, 8);
+  this.player = new Player(this, this.scene,
+			   new Rectangle(0, 0, tilesize, tilesize), hitbox);
   this.overlays = [];
   this.play_music(this.audios.music);
   this.focus();

@@ -323,6 +323,7 @@ Scene.prototype.startCollapsingAll = function (ticks)
     for (var x = 0; x < tilemap.width; x++) {
       var p = new Point(x, y);
       var c = tilemap.get(p.x, p.y);
+      this.clearTransition(p.x, p.y);
       switch (c) {
       case Tile.Floor:
 	this.startCollapsingFloor(ticks, p);

@@ -59,15 +59,14 @@ Transition.prototype.repaint = function (ctx, x, y)
 }
 
 // Player is an Actor.
-function Player(game, scene, ticks, spritesize)
+function Player(game, scene, rect, hitbox)
 {
   this.game = game;
   this.scene = scene;
-  this.ticks = ticks;
-  this.spritesize = spritesize;
+  this.rect = rect;
+  this.hitbox = hitbox;
   this.layer = 0;
   this.alive = true;
-  this.rect = new Rectangle(0, 0, spritesize, spritesize);
   
   this.vx = this.vy = 0;
   this.maxjump = 20;		// max duration of jumping.
@@ -119,13 +118,12 @@ Player.prototype.move = function (vx, vy)
     vy -= slipping;
   }
   
-  // Hitbox Dimensions are hardcoded to match the sprite closely (-_-)  :D
-  var hitbox = new Rectangle(this.rect.x+6, this.rect.y+19, 20, 8);
-
+  var bounds = new Rectangle(this.rect.x+this.hitbox.x, this.rect.y+this.hitbox.y,
+			     this.hitbox.width, this.hitbox.height);
   // move 
-  var d = this.scene.collideTiles(hitbox, speed*vx, speed*vy);
-  d.x = this.scene.collideTiles(hitbox, speed*vx, d.y).x;
-  d.y = this.scene.collideTiles(hitbox, d.x, speed*vy).y;
+  var d = this.scene.collideTiles(bounds, speed*vx, speed*vy);
+  d.x = this.scene.collideTiles(bounds, speed*vx, d.y).x;
+  d.y = this.scene.collideTiles(bounds, d.x, speed*vy).y;
   this.rect.x += d.x;
   this.rect.y += d.y;
   if (0 <= this.jumping) {
@@ -136,7 +134,7 @@ Player.prototype.move = function (vx, vy)
   }
 
   // pick anything?
-  if (this.scene.pick(hitbox)) {
+  if (this.scene.pick(bounds)) {
     this.game.audios.pick.currentTime = 0;
     this.game.audios.pick.play();
   }
@@ -165,8 +163,8 @@ Player.prototype.animu = function (ticks)
     }
   } else if (0 <= this.melting) {
     // Player is Melting
-    this.sprite_index = Sprite.PlayerDeathStart+this.spawning;
-    this.shadow_index = Sprite.ShadowDeathStart+this.spawning;
+    this.sprite_index = Sprite.PlayerDeathStart+this.melting;
+    this.shadow_index = Sprite.ShadowDeathStart+this.melting;
     this.melting++;
     if (PlayerDeathDuration <= this.melting) {
       this.melting = -1;
@@ -216,7 +214,8 @@ Player.prototype.repaint = function (ctx, x, y)
 {
   // draw the shadow.
   ctx.drawImage(this.game.images.sprites_shadow,
-		this.shadow_index*this.spritesize, 0, this.rect.width, this.rect.height,
+		this.shadow_index*this.rect.width, 0,
+		this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
 
   if (0 <= this.jumping) {
@@ -226,7 +225,8 @@ Player.prototype.repaint = function (ctx, x, y)
   }
   // draw the player.
   ctx.drawImage(this.game.images.sprites_player,
-		this.sprite_index*this.spritesize, 0, this.rect.width, this.rect.height,
+		this.sprite_index*this.rect.width, 0,
+		this.rect.width, this.rect.height,
 		x, y, this.rect.width, this.rect.height);
 }
 
